@@ -280,10 +280,30 @@ const MenuGeneratorApp = () => {
       reader.onload = () => {
         const data = JSON.parse(reader.result);
         setMenuItems(data);
+
+        // Znajdź najwyższe ID w strukturze
+        const maxId = getMaxIdFromItems(data);
+        setIdCounter(maxId + 1);  // Ustaw idCounter na najwyższe ID + 1
       };
       reader.readAsText(file);
     }
   };
+
+
+  // Funkcja pomocnicza do znajdowania najwyższego ID w strukturze
+  const getMaxIdFromItems = (items) => {
+    let maxId = 0;
+    items.forEach(item => {
+      const numericId = parseInt(item.id.split('_')[1], 10);
+      maxId = Math.max(maxId, numericId);
+
+      if (item.children && item.children.length > 0) {
+        maxId = Math.max(maxId, getMaxIdFromItems(item.children)); // Rekurencja dla dzieci
+      }
+    });
+    return maxId;
+  };
+
 
   // Renderowanie elementów menu
   const renderMenuItems = (items, parentId = null) => {
