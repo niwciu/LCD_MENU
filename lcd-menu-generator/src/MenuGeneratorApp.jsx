@@ -3,6 +3,8 @@ import { FaSave, FaFolderOpen, FaPlus, FaTrash, FaArrowUp, FaArrowDown, FaEdit }
 
 // Komponent pojedynczego obiektu w menu (może mieć podobiekty)
 const MenuItem = ({ item, onRename, onMoveUp, onMoveDown, onDelete, onAddChild, parentId }) => {
+  const isEditable = item.children.length === 0; // Jeśli obiekt nie ma dzieci, pole jest edytowalne
+
   return (
     <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px', paddingLeft: `${item.level * 20}px` }}>
       {/* Pole edycji nazwy obiektu */}
@@ -11,11 +13,29 @@ const MenuItem = ({ item, onRename, onMoveUp, onMoveDown, onDelete, onAddChild, 
         value={item.displayName}
         onChange={(e) => onRename(item.id, e.target.value)}
         style={{
-          fontSize: '16px',
+          fontSize: '14px',
           padding: '5px',
           flexGrow: 1,
           marginRight: '10px',
           borderRadius: '4px',
+          width: '150px',
+        }}
+      />
+
+      {/* Pole tekstowe z podpowiedzią */}
+      <input
+        type="text"
+        placeholder={isEditable ? "place callback function name..." : "not available for parent objects"}
+        disabled={!isEditable} // Jeśli obiekt ma dzieci, pole jest wyłączone
+        style={{
+          fontSize: '13px',
+          padding: '5px',
+          marginRight: '10px',
+          width: '250px',
+          textAlign: 'left',
+          border: '1px solid #ddd',
+          borderRadius: '4px',
+          backgroundColor: isEditable ? '' : '#000000', // Zmieniamy tło na szare, gdy pole jest wyłączone
         }}
       />
       
