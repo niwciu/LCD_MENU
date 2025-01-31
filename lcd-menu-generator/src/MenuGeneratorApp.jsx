@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { FaSave, FaFolderOpen, FaPlus, FaTrash, FaArrowUp, FaArrowDown, FaEdit } from 'react-icons/fa'; // Dodajemy ikony
 
 // Komponent pojedynczego obiektu w menu (może mieć podobiekty)
 const MenuItem = ({ item, onRename, onMoveUp, onMoveDown, onDelete, onAddChild, parentId }) => {
@@ -21,15 +22,16 @@ const MenuItem = ({ item, onRename, onMoveUp, onMoveDown, onDelete, onAddChild, 
       {/* Wyświetlanie ID obiektu w nieedytowalnym polu */}
       <input
         type="text"
-        value={item.id}
+        value={"ID: " + item.id}
         readOnly
         style={{
           fontSize: '14px',
           padding: '5px',
           marginRight: '10px',
           width: '150px',
-          textAlign: 'center',
-          backgroundColor: '#f0f0f0',
+          textAlign: 'left',
+          backgroundColor: '#333',
+          color: '#fff',
           border: '1px solid #ddd',
           borderRadius: '4px',
         }}
@@ -46,7 +48,7 @@ const MenuItem = ({ item, onRename, onMoveUp, onMoveDown, onDelete, onAddChild, 
           borderRadius: '4px',
         }}
       >
-        ↑
+        <FaArrowUp />
       </button>
       
       {/* Przycisk przesunięcia w dół */}
@@ -59,12 +61,12 @@ const MenuItem = ({ item, onRename, onMoveUp, onMoveDown, onDelete, onAddChild, 
           borderRadius: '4px',
         }}
       >
-        ↓
+        <FaArrowDown />
       </button>
       
       {/* Przycisk kosza - usuwanie obiektu */}
       <button
-        onClick={() => onDelete(item.id, parentId)} // Przekazujemy parentId dla odpowiedniego kontekstu
+        onClick={() => onDelete(item.id, parentId)}
         style={{
           padding: '5px 10px',
           fontSize: '16px',
@@ -73,7 +75,7 @@ const MenuItem = ({ item, onRename, onMoveUp, onMoveDown, onDelete, onAddChild, 
           borderRadius: '4px',
         }}
       >
-        🗑️
+        <FaTrash />
       </button>
       
       {/* Przycisk + (dodawanie podobiektu) */}
@@ -87,7 +89,7 @@ const MenuItem = ({ item, onRename, onMoveUp, onMoveDown, onDelete, onAddChild, 
           borderRadius: '4px',
         }}
       >
-        +
+        <FaPlus />
       </button>
     </div>
   );
@@ -224,7 +226,7 @@ const MenuGeneratorApp = () => {
     });
   };
 
-  // Funkcja do dodawania podobiektu
+  // Funkcja pomocnicza do dodawania podobiektu
   const addChildMenuItem = (parentId) => {
     const parentItem = findItemById(menuItems, parentId);
     if (parentItem) {
@@ -261,6 +263,28 @@ const MenuGeneratorApp = () => {
     return null;
   };
 
+  // Funkcja do zapisu struktury menu do pliku
+  const saveMenuToFile = () => {
+    const blob = new Blob([JSON.stringify(menuItems)], { type: 'application/json' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'menu_structure.json';
+    link.click();
+  };
+
+  // Funkcja do wczytania struktury menu z pliku
+  const loadMenuFromFile = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const data = JSON.parse(reader.result);
+        setMenuItems(data);
+      };
+      reader.readAsText(file);
+    }
+  };
+
   // Renderowanie elementów menu
   const renderMenuItems = (items, parentId = null) => {
     return items.map(item => (
@@ -285,11 +309,11 @@ const MenuGeneratorApp = () => {
 
   return (
     <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-      <h1>Menu Generator</h1>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
-        <h3 style={{ margin: 0 }}>MENU</h3>
+      <h1 style={{ marginBottom: '10px' }}>Menu Generator</h1>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+        {/* Przycisk zapisu */}
         <button
-          onClick={addMenuItem}
+          onClick={saveMenuToFile}
           style={{
             padding: '5px 10px',
             fontSize: '20px',
@@ -301,10 +325,66 @@ const MenuGeneratorApp = () => {
             color: '#4CAF50',
           }}
         >
-          +
+          <FaSave />
+        </button>
+
+        {/* Przycisk wczytywania */}
+        <input
+          type="file"
+          onChange={loadMenuFromFile}
+          style={{ display: 'none' }}
+          id="file-input"
+        />
+        <button
+          onClick={() => document.getElementById('file-input').click()}
+          style={{
+            padding: '5px 10px',
+            fontSize: '20px',
+            marginLeft: '10px',
+            cursor: 'pointer',
+            borderRadius: '50%',
+            border: '2px solid #4CAF50',
+            backgroundColor: '#fff',
+            color: '#4CAF50',
+          }}
+        >
+          <FaFolderOpen />
+        </button>
+
+        {/* Przycisk nadawania nowych ID */}
+        <button
+          style={{
+            padding: '5px 10px',
+            fontSize: '20px',
+            marginLeft: '10px',
+            cursor: 'pointer',
+            borderRadius: '50%',
+            border: '2px solid #4CAF50',
+            backgroundColor: '#fff',
+            color: '#4CAF50',
+          }}
+        >
+          <FaEdit />
         </button>
       </div>
-      <div>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px', marginTop: '40px' }}>
+        <h3 style={{ margin: 0, paddingLeft: '20px' }}>MENU</h3>
+
+        {/* Przycisk dodawania menu */}
+        <button
+          onClick={addMenuItem}
+          style={{
+            padding: '5px 10px',
+            fontSize: '16px',
+            marginLeft: '5px',
+            cursor: 'pointer',
+            borderRadius: '4px',
+          }}
+        >
+          <FaPlus />
+        </button>
+      </div>
+      <div style={{ paddingLeft: '40px' }}>
         {renderMenuItems(menuItems)}
       </div>
     </div>
