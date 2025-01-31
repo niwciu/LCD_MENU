@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { FaSave, FaFolderOpen, FaPlus, FaTrash, FaArrowUp, FaArrowDown, FaEdit } from 'react-icons/fa'; // Dodajemy ikony
 
 // Komponent pojedynczego obiektu w menu (może mieć podobiekty)
-const MenuItem = ({ item, onRename, onMoveUp, onMoveDown, onDelete, onAddChild, parentId }) => {
+const MenuItem = ({ item, onRename, onMoveUp, onMoveDown, onDelete, onAddChild, showCallbackName, parentId }) => {
   const isEditable = item.children.length === 0; // Jeśli obiekt nie ma dzieci, pole jest edytowalne
-
+  console.log(showCallbackName);  // Sprawdź wartość w konsoli
   return (
     <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px', paddingLeft: `${item.level * 20}px` }}>
       {/* Pole edycji nazwy obiektu */}
@@ -23,6 +23,7 @@ const MenuItem = ({ item, onRename, onMoveUp, onMoveDown, onDelete, onAddChild, 
       />
 
       {/* Pole tekstowe z podpowiedzią */}
+    {showCallbackName && (
       <input
         type="text"
         placeholder={isEditable ? "place callback function name..." : "not available for parent objects"}
@@ -38,6 +39,8 @@ const MenuItem = ({ item, onRename, onMoveUp, onMoveDown, onDelete, onAddChild, 
           backgroundColor: isEditable ? '' : '#000000', // Zmieniamy tło na szare, gdy pole jest wyłączone
         }}
       />
+      )
+    }
       
       {/* Wyświetlanie ID obiektu w nieedytowalnym polu */}
       <input
@@ -120,6 +123,11 @@ const MenuGeneratorApp = () => {
   const [menuItems, setMenuItems] = useState([]);
   const [idCounter, setIdCounter] = useState(1);  // Licznik dla unikalnych ID
   const [menuDepth, setMenuDepth] = useState(0); // Głębokość menu
+  const [showCallbackName, setShowCallbackName] = useState(false); // Stan dla globalnego checkboxa
+  // Funkcja do zmiany stanu checkboxa
+  const toggleCallbackNameVisibility = () => {
+    setShowCallbackName(prevState => !prevState);
+  };
 
   // Funkcja do obliczania głębokości menu
   const calculateDepth = (items) => {
@@ -409,6 +417,7 @@ const MenuGeneratorApp = () => {
           onMoveDown={moveDown}
           onDelete={deleteMenuItem}
           onAddChild={addChildMenuItem}
+          showCallbackName={showCallbackName}
         />
         {item.children.length > 0 && (
           <div style={{ marginLeft: '20px' }}>
@@ -418,7 +427,7 @@ const MenuGeneratorApp = () => {
       </div>
     ));
   };
-
+  console.log('showCallbackName:', showCallbackName); // Tu sprawdzisz wartość stanu
   return (
     <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
       <h1 style={{ marginBottom: '10px' }}>Menu Generator</h1>
@@ -480,6 +489,17 @@ const MenuGeneratorApp = () => {
         <FaEdit />
       </button>
 
+      </div>
+
+      {/* Globalny checkbox */}
+      <div>
+        <input
+          type="checkbox"
+          checked={showCallbackName}
+          onChange={toggleCallbackNameVisibility}
+          style={{ marginRight: '10px' }}
+        />
+        <span>Enable menu items execute callback generation</span>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px', marginTop: '40px' }}>
         <h3 style={{ margin: 0, paddingLeft: '20px' }}>MENU</h3>
