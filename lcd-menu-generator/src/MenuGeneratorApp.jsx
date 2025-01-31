@@ -289,7 +289,6 @@ const MenuGeneratorApp = () => {
     }
   };
 
-
   // Funkcja pomocnicza do znajdowania najwyższego ID w strukturze
   const getMaxIdFromItems = (items) => {
     let maxId = 0;
@@ -304,7 +303,53 @@ const MenuGeneratorApp = () => {
     return maxId;
   };
 
+  // Funkcja aktualizująca ID
+  const resetIds = (items, level = 1) => {
+    let newIdCounter = 1; // Licznik do nowych ID
+    return items.map(item => {
+      // Generujemy nowe ID zgodnie z poziomem
+      const newId = `menu_${level}_${newIdCounter}`;
+      
+      // Tworzymy nowy obiekt z nowym ID, ale zachowujemy oryginalną nazwę
+      const newItem = { ...item, id: newId, children: [] };
+  
+      // Zwiększamy licznik ID
+      newIdCounter++;
+  
+      // Jeśli element ma dzieci, to rekurencyjnie aktualizujemy ich ID
+      if (item.children.length > 0) {
+        newItem.children = resetIds(item.children, level + 1); // Zwiększamy poziom
+      }
+  
+      return newItem;
+    });
+  };
 
+  // Funkcja resetująca ID w całym menu z zachowaniem hierarchii
+  const resetMenuIds = () => {
+    let counter = 1; // Licznik, który będzie nadawał ID
+
+    // Funkcja do nadawania nowych ID rekurencyjnie
+    const updateIdsRecursively = (items, parentId = '') => {
+      return items.map((item, index) => {
+        // Nadanie nowego ID na podstawie rodzica
+        const newId = parentId ? `${parentId}_${index + 1}` : `menu_${counter++}`;
+        const updatedItem = { ...item, id: newId };
+
+        // Zaktualizowanie dzieci (jeśli istnieją)
+        if (updatedItem.children && updatedItem.children.length > 0) {
+          updatedItem.children = updateIdsRecursively(updatedItem.children, newId);  // Rekurencyjnie nadawaj ID dzieciom
+        }
+
+        return updatedItem;
+      });
+    };
+
+  // Zaktualizowanie głównych elementów menu
+    const updatedMenuItems = updateIdsRecursively(menuItems);
+    setMenuItems(updatedMenuItems); // Zaktualizowanie stanu
+  };
+  
   // Renderowanie elementów menu
   const renderMenuItems = (items, parentId = null) => {
     return items.map(item => (
@@ -373,19 +418,21 @@ const MenuGeneratorApp = () => {
 
         {/* Przycisk nadawania nowych ID */}
         <button
-          style={{
-            padding: '5px 10px',
-            fontSize: '20px',
-            marginLeft: '10px',
-            cursor: 'pointer',
-            borderRadius: '50%',
-            border: '2px solid #4CAF50',
-            backgroundColor: '#fff',
-            color: '#4CAF50',
-          }}
-        >
-          <FaEdit />
-        </button>
+        onClick={resetMenuIds}
+        style={{
+          padding: '5px 10px',
+          fontSize: '20px',
+          marginLeft: '10px',
+          cursor: 'pointer',
+          borderRadius: '50%',
+          border: '2px solid #4CAF50',
+          backgroundColor: '#fff',
+          color: '#4CAF50',
+        }}
+      >
+        <FaEdit />
+      </button>
+
       </div>
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px', marginTop: '40px' }}>
         <h3 style={{ margin: 0, paddingLeft: '20px' }}>MENU</h3>
