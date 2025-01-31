@@ -99,20 +99,39 @@ const MenuItem = ({ item, onRename, onMoveUp, onMoveDown, onDelete, onAddChild, 
 const MenuGeneratorApp = () => {
   const [menuItems, setMenuItems] = useState([]);
   const [idCounter, setIdCounter] = useState(1);  // Licznik dla unikalnych ID
+  const [menuDepth, setMenuDepth] = useState(0); // Głębokość menu
+
+  // Funkcja do obliczania głębokości menu
+  const calculateDepth = (items) => {
+    let depth = 0;
+
+    const calculate = (items, level) => {
+      items.forEach(item => {
+        depth = Math.max(depth, level + 1); // Dodajemy +1, ponieważ poziom 0 jest już dla samego obiektu głównego
+        if (item.children.length > 0) {
+          calculate(item.children, level + 1);
+        }
+      });
+    };
+
+    calculate(items, 0);
+    return depth;
+  };
+
 
   // Funkcja do dodawania nowego obiektu (głównego)
   const addMenuItem = () => {
-    setMenuItems([
-      ...menuItems,
-      { id: `menu_${idCounter}`, displayName: `menu_${idCounter}`, level: 0, children: [] }
-    ]);
+    const newItem = { id: `menu_${idCounter}`, displayName: `menu_${idCounter}`, level: 0, children: [] };
+    setMenuItems([...menuItems, newItem]);
     setIdCounter(idCounter + 1); // Zwiększ ID
+    setMenuDepth(calculateDepth([...menuItems, newItem])); // Aktualizujemy głębokość
   };
 
   // Funkcja do zmiany nazwy obiektu (tylko zmienia widoczną nazwę)
   const renameMenuItem = (id, newName) => {
     const updatedItems = updateItemName(menuItems, id, newName);
     setMenuItems(updatedItems);
+    setMenuDepth(calculateDepth(updatedItems)); // Aktualizujemy głębokość
   };
 
   // Funkcja pomocnicza do zmiany nazwy obiektu
@@ -183,6 +202,7 @@ const MenuGeneratorApp = () => {
     }
 
     setMenuItems(updatedItems); // Zaktualizuj stan
+    setMenuDepth(calculateDepth(updatedItems)); // Aktualizujemy głębokość
   };
 
   // Funkcja do przesuwania obiektu w dół w obrębie jego rodzica (albo na najwyższym poziomie)
@@ -196,12 +216,14 @@ const MenuGeneratorApp = () => {
     }
 
     setMenuItems(updatedItems); // Zaktualizuj stan
+    setMenuDepth(calculateDepth(updatedItems)); // Aktualizujemy głębokość
   };
 
   // Funkcja do usuwania obiektu (najwyższy poziom lub podmenu)
   const deleteMenuItem = (id, parentId) => {
     const newMenuItems = deleteItem(menuItems, id, parentId);
     setMenuItems(newMenuItems);
+    setMenuDepth(calculateDepth(newMenuItems)); // Aktualizujemy głębokość
   };
 
   // Funkcja pomocnicza do usuwania obiektu
@@ -235,6 +257,7 @@ const MenuGeneratorApp = () => {
 
       const updatedItems = addItem(menuItems, parentId, childItem);
       setMenuItems(updatedItems);
+      setMenuDepth(calculateDepth(updatedItems)); // Aktualizujemy głębokość
     }
   };
 
@@ -280,7 +303,11 @@ const MenuGeneratorApp = () => {
       reader.onload = () => {
         const data = JSON.parse(reader.result);
         setMenuItems(data);
-
+  
+        // Obliczanie głębokości po załadowaniu menu z pliku
+        const depth = calculateDepth(data);
+        setMenuDepth(depth);  // Ustawienie głębokości
+  
         // Znajdź najwyższe ID w strukturze
         const maxId = getMaxIdFromItems(data);
         setIdCounter(maxId + 1);  // Ustaw idCounter na najwyższe ID + 1
@@ -453,6 +480,9 @@ const MenuGeneratorApp = () => {
       </div>
       <div style={{ paddingLeft: '40px' }}>
         {renderMenuItems(menuItems)}
+      </div>
+      <div style={{ padding: '20px' }}>
+        <h4 style={{ margin: '0' }}>MAX MENU DEPTH: {menuDepth}</h4>
       </div>
     </div>
   );
