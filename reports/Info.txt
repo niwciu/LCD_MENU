@@ -1,0 +1,4 @@
+In report folder are two sub folders that are needed to generate code coverace and code complexity reports from predefined targets. 
+After cloning this template ore creating project from it 
+1) remove all files from reports folder and subfolders
+2) remove folder from github repo and add to .gitignore
