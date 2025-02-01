@@ -133,6 +133,7 @@ const MenuGeneratorApp = () => {
   const [menuDepth, setMenuDepth] = useState(0); // Głębokość menu
   const [showCallbackName, setShowCallbackName] = useState(false); // Stan dla globalnego checkboxa
   const [code, setCode] = useState(""); // Przykładowy kod w C
+  const [menuHeaderCode, setHeaderCode] = useState(""); // Przykładowy kod w C
   // Funkcja do zmiany stanu checkboxa
   const toggleCallbackNameVisibility = () => {
     setShowCallbackName(prevState => !prevState);
@@ -153,6 +154,7 @@ const MenuGeneratorApp = () => {
   // Funkcja generująca kod w C
   const generateCode = () => {
     let generatedCode = '';
+    let generatedHeaderCode = '';
   
     // Funkcja rekurencyjna do generowania deklaracji
     const generateMenuDeclarations = (menuItems, parentId = '', indentationLevel = 0) => {
@@ -161,7 +163,7 @@ const MenuGeneratorApp = () => {
         const id = parentId ? `${parentId}_${index + 1}` : `menu_${index + 1}`;
   
         // Dodanie deklaracji
-        generatedCode += `${indentation}extern menu_t ${id};\n`;
+        generatedHeaderCode += `${indentation}extern menu_t ${id};\n`;
   
         // Jeśli są dzieci, wywołaj rekursję
         if (item.children && item.children.length > 0) {
@@ -169,8 +171,7 @@ const MenuGeneratorApp = () => {
         }
       });
     };
-  
-    // Funkcja rekurencyjna do generowania definicji
+
     // Funkcja rekurencyjna do generowania definicji
     const generateMenuDefinitions = (menuItems, parentId = '', previousId = null, indentationLevel = 1) => {
       menuItems.forEach((item, index) => {
@@ -213,17 +214,26 @@ const MenuGeneratorApp = () => {
   
     // Ustawienie wygenerowanego kodu w stanie
     setCode(generatedCode);
+    setHeaderCode(generatedHeaderCode);
   };
   
   
-  
+  // Funkcja do wyświetlania kodu C z formatowaniem
+  const displayHeaderWindow = () => (
+    <div style={{ marginTop: '40px', backgroundColor: '#2d2d2d', padding: '20px', borderRadius: '5px' }}>
+      <h3 style={{ color: '#fff' }}>menu.h</h3>
+      <SyntaxHighlighter language="c" style={darcula  }> 
+        {menuHeaderCode}
+      </SyntaxHighlighter>
+    </div>
+  );
   
   
 
   // Funkcja do wyświetlania kodu C z formatowaniem
   const displayCodeWindow = () => (
     <div style={{ marginTop: '40px', backgroundColor: '#2d2d2d', padding: '20px', borderRadius: '5px' }}>
-      <h3 style={{ color: '#fff' }}>C Code Example</h3>
+      <h3 style={{ color: '#fff' }}>menu.c</h3>
       <SyntaxHighlighter language="c" style={darcula  }> 
         {code}
       </SyntaxHighlighter>
@@ -632,6 +642,7 @@ const MenuGeneratorApp = () => {
           <h2>Code Preview</h2>
           {/* Tutaj znajduje się okno wyświetlania kodu */}
           {displayCodeWindow()}
+          {displayHeaderWindow()}
         </div>
     </div>
   );
