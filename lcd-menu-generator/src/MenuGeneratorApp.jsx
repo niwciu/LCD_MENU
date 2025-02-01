@@ -4,9 +4,14 @@ import SyntaxHighlighter from 'react-syntax-highlighter';
 import { darcula } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 
 // Komponent pojedynczego obiektu w menu (może mieć podobiekty)
-const MenuItem = ({ item, onRename, onMoveUp, onMoveDown, onDelete, onAddChild, showCallbackName, parentId }) => {
+const MenuItem = ({ item, onRename, onMoveUp, onMoveDown, onDelete, onAddChild, showCallbackName, parentId, onUpdateCallback }) => {
   const isEditable = item.children.length === 0; // Jeśli obiekt nie ma dzieci, pole jest edytowalne
-  console.log(showCallbackName);  // Sprawdź wartość w konsoli
+
+  // Obsługa zmiany callbacka
+  const handleCallbackChange = (e) => {
+    onUpdateCallback(item.id, e.target.value); // Przesyłamy nową nazwę callbacka do rodzica
+  };
+
   return (
     <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px', paddingLeft: `${item.level * 20}px` }}>
       {/* Pole edycji nazwy obiektu */}
@@ -25,25 +30,26 @@ const MenuItem = ({ item, onRename, onMoveUp, onMoveDown, onDelete, onAddChild, 
       />
 
       {/* Pole tekstowe z podpowiedzią */}
-    {showCallbackName && (
-      <input
-        type="text"
-        placeholder={isEditable ? "place callback function name..." : "not available for parent objects"}
-        disabled={!isEditable} // Jeśli obiekt ma dzieci, pole jest wyłączone
-        style={{
-          fontSize: '13px',
-          padding: '5px',
-          marginRight: '10px',
-          width: '250px',
-          textAlign: 'left',
-          border: '1px solid #ddd',
-          borderRadius: '4px',
-          backgroundColor: isEditable ? '' : '#000000', // Zmieniamy tło na szare, gdy pole jest wyłączone
-        }}
-      />
-      )
-    }
-      
+      {showCallbackName && (
+        <input
+          type="text"
+          placeholder={isEditable ? "Place callback function name..." : "Not available for parent objects"}
+          disabled={!isEditable} // Jeśli obiekt ma dzieci, pole jest wyłączone
+          style={{
+            fontSize: '13px',
+            padding: '5px',
+            marginRight: '10px',
+            width: '250px',
+            textAlign: 'left',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            backgroundColor: isEditable ? '' : '#000000', // Zmieniamy tło na szare, gdy pole jest wyłączone
+          }}
+          value={item.callbackName||''} 
+          onChange={handleCallbackChange} // Aktualizacja callbackName
+        />
+      )}
+
       {/* Wyświetlanie ID obiektu w nieedytowalnym polu */}
       <input
         type="text"
@@ -132,9 +138,17 @@ const MenuGeneratorApp = () => {
     setShowCallbackName(prevState => !prevState);
   };
 
-  // useLayoutEffect(() => {
-  //   setCode(generateCode(menuItems));
-  // }, [menuItems]);
+
+  const handleCallbackChange = (id, callbackName) => {
+    const updatedMenuItems = [...menuItems];
+    const itemIndex = updatedMenuItems.findIndex(item => item.id === id);
+    if (itemIndex !== -1) {
+      updatedMenuItems[itemIndex].callbackName = callbackName; // Zaktualizuj callbackName
+      setMenuItems(updatedMenuItems); // Zaktualizuj stan
+    }
+  };
+  
+  
 
   // Funkcja generująca kod w C
   const generateCode = () => {
@@ -157,33 +171,39 @@ const MenuGeneratorApp = () => {
     };
   
     // Funkcja rekurencyjna do generowania definicji
+    // Funkcja rekurencyjna do generowania definicji
     const generateMenuDefinitions = (menuItems, parentId = '', previousId = null, indentationLevel = 1) => {
       menuItems.forEach((item, index) => {
-        // Generowanie id dla menu
         const id = parentId ? `${parentId}_${index + 1}` : `menu_${index + 1}`;
-  
+        
         // Generowanie nextId, prevId, childId, parentId
-        const nextId = index < menuItems.length - 1 ? `${parentId ? parentId : 'menu'}_${index + 2}` : 'NULL';  // Dodajemy 'menu' jeśli parentId jest NULL
-        const prevId = index > 0 ? `${parentId ? parentId : 'menu'}_${index}` : 'NULL';  // Dodajemy 'menu' jeśli parentId jest NULL
-        const childId = item.children && item.children.length > 0 ? `${id}_1` : 'NULL'; // Pierwsze dziecko
-        const parentIdValue = parentId ? parentId : 'NULL'; // Rodzic
-  
-        // Wcięcia
+        const nextId = index < menuItems.length - 1 ? `${parentId ? parentId : 'menu'}_${index + 2}` : 'NULL';
+        const prevId = index > 0 ? `${parentId ? parentId : 'menu'}_${index}` : 'NULL';
+        const childId = item.children && item.children.length > 0 ? `${id}_1` : 'NULL';
+        const parentIdValue = parentId ? parentId : 'NULL';
+        
+        // Callback Name (bez cudzysłowów, jeśli istnieje callbackName)
+        const callbackValue = item.callbackName ? item.callbackName : 'NULL';
+        
+        // Zmienna wcięcia
         const indentation = '  '.repeat(indentationLevel);
-  
+        
         // Generowanie definicji struktury menu_t
         generatedCode += `${indentation}menu_t ${id} = { "${item.displayName}", `;
         generatedCode += `${nextId !== 'NULL' ? `&${nextId}` : 'NULL'}, `;
         generatedCode += `${prevId !== 'NULL' ? `&${prevId}` : 'NULL'}, `;
         generatedCode += `${childId !== 'NULL' ? `&${childId}` : 'NULL'}, `;
-        generatedCode += `${parentIdValue !== 'NULL' ? `&${parentIdValue}` : 'NULL'} };\n`;
-  
+        generatedCode += `${parentIdValue !== 'NULL' ? `&${parentIdValue}` : 'NULL'}, `;
+        generatedCode += `${callbackValue !== 'NULL' ? callbackValue : 'NULL'} };\n`;
+        
         // Rekursja dla dzieci
         if (item.children && item.children.length > 0) {
-          generateMenuDefinitions(item.children, id, prevId, indentationLevel + 1); // Poprzednik dla dzieci to aktualny element
+          generateMenuDefinitions(item.children, id, prevId, indentationLevel + 1);
         }
       });
     };
+
+    
   
     // 1. Generowanie deklaracji dla menu
     generateMenuDeclarations(menuItems);
@@ -194,6 +214,7 @@ const MenuGeneratorApp = () => {
     // Ustawienie wygenerowanego kodu w stanie
     setCode(generatedCode);
   };
+  
   
   
   
@@ -500,6 +521,7 @@ const MenuGeneratorApp = () => {
           onDelete={deleteMenuItem}
           onAddChild={addChildMenuItem}
           showCallbackName={showCallbackName}
+          onUpdateCallback={handleCallbackChange} // Przekazanie funkcji onUpdateCallback
         />
         {item.children.length > 0 && (
           <div style={{ marginLeft: '20px' }}>
