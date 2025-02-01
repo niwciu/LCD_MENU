@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { FaSave, FaFolderOpen, FaPlus, FaTrash, FaArrowUp, FaArrowDown, FaEdit } from 'react-icons/fa'; // Dodajemy ikony
+import SyntaxHighlighter from 'react-syntax-highlighter';
+import { darcula } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 
 // Komponent pojedynczego obiektu w menu (może mieć podobiekty)
 const MenuItem = ({ item, onRename, onMoveUp, onMoveDown, onDelete, onAddChild, showCallbackName, parentId }) => {
@@ -124,10 +126,88 @@ const MenuGeneratorApp = () => {
   const [idCounter, setIdCounter] = useState(1);  // Licznik dla unikalnych ID
   const [menuDepth, setMenuDepth] = useState(0); // Głębokość menu
   const [showCallbackName, setShowCallbackName] = useState(false); // Stan dla globalnego checkboxa
+  const [code, setCode] = useState(""); // Przykładowy kod w C
   // Funkcja do zmiany stanu checkboxa
   const toggleCallbackNameVisibility = () => {
     setShowCallbackName(prevState => !prevState);
   };
+
+  // useLayoutEffect(() => {
+  //   setCode(generateCode(menuItems));
+  // }, [menuItems]);
+
+  // Funkcja generująca kod w C
+  const generateCode = () => {
+    let generatedCode = '';
+  
+    // Funkcja rekurencyjna do generowania deklaracji
+    const generateMenuDeclarations = (menuItems, parentId = '', indentationLevel = 0) => {
+      menuItems.forEach((item, index) => {
+        const indentation = '  '.repeat(indentationLevel);
+        const id = parentId ? `${parentId}_${index + 1}` : `menu_${index + 1}`;
+  
+        // Dodanie deklaracji
+        generatedCode += `${indentation}extern menu_t ${id};\n`;
+  
+        // Jeśli są dzieci, wywołaj rekursję
+        if (item.children && item.children.length > 0) {
+          generateMenuDeclarations(item.children, id, indentationLevel + 1);
+        }
+      });
+    };
+  
+    // Funkcja rekurencyjna do generowania definicji
+    const generateMenuDefinitions = (menuItems, parentId = '', previousId = null, indentationLevel = 1) => {
+      menuItems.forEach((item, index) => {
+        // Generowanie id dla menu
+        const id = parentId ? `${parentId}_${index + 1}` : `menu_${index + 1}`;
+  
+        // Generowanie nextId, prevId, childId, parentId
+        const nextId = index < menuItems.length - 1 ? `${parentId ? parentId : 'menu'}_${index + 2}` : 'NULL';  // Dodajemy 'menu' jeśli parentId jest NULL
+        const prevId = index > 0 ? `${parentId ? parentId : 'menu'}_${index}` : 'NULL';  // Dodajemy 'menu' jeśli parentId jest NULL
+        const childId = item.children && item.children.length > 0 ? `${id}_1` : 'NULL'; // Pierwsze dziecko
+        const parentIdValue = parentId ? parentId : 'NULL'; // Rodzic
+  
+        // Wcięcia
+        const indentation = '  '.repeat(indentationLevel);
+  
+        // Generowanie definicji struktury menu_t
+        generatedCode += `${indentation}menu_t ${id} = { "${item.displayName}", `;
+        generatedCode += `${nextId !== 'NULL' ? `&${nextId}` : 'NULL'}, `;
+        generatedCode += `${prevId !== 'NULL' ? `&${prevId}` : 'NULL'}, `;
+        generatedCode += `${childId !== 'NULL' ? `&${childId}` : 'NULL'}, `;
+        generatedCode += `${parentIdValue !== 'NULL' ? `&${parentIdValue}` : 'NULL'} };\n`;
+  
+        // Rekursja dla dzieci
+        if (item.children && item.children.length > 0) {
+          generateMenuDefinitions(item.children, id, prevId, indentationLevel + 1); // Poprzednik dla dzieci to aktualny element
+        }
+      });
+    };
+  
+    // 1. Generowanie deklaracji dla menu
+    generateMenuDeclarations(menuItems);
+  
+    // 2. Generowanie definicji dla menu
+    generateMenuDefinitions(menuItems);
+  
+    // Ustawienie wygenerowanego kodu w stanie
+    setCode(generatedCode);
+  };
+  
+  
+  
+  
+
+  // Funkcja do wyświetlania kodu C z formatowaniem
+  const displayCodeWindow = () => (
+    <div style={{ marginTop: '40px', backgroundColor: '#2d2d2d', padding: '20px', borderRadius: '5px' }}>
+      <h3 style={{ color: '#fff' }}>C Code Example</h3>
+      <SyntaxHighlighter language="c" style={darcula  }> 
+        {code}
+      </SyntaxHighlighter>
+    </div>
+  );
 
   // Funkcja do obliczania głębokości menu
   const calculateDepth = (items) => {
@@ -286,6 +366,7 @@ const MenuGeneratorApp = () => {
       const updatedItems = addItem(menuItems, parentId, childItem);
       setMenuItems(updatedItems);
       setMenuDepth(calculateDepth(updatedItems)); // Aktualizujemy głębokość
+
     }
   };
 
@@ -395,9 +476,10 @@ const MenuGeneratorApp = () => {
         if (updatedItem.children && updatedItem.children.length > 0) {
           updatedItem.children = updateIdsRecursively(updatedItem.children, newId);  // Rekurencyjnie nadawaj ID dzieciom
         }
-
+        generateCode(); 
         return updatedItem;
       });
+      
     };
 
   // Zaktualizowanie głównych elementów menu
@@ -427,7 +509,7 @@ const MenuGeneratorApp = () => {
       </div>
     ));
   };
-  console.log('showCallbackName:', showCallbackName); // Tu sprawdzisz wartość stanu
+
   return (
     <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
       <h1 style={{ marginBottom: '10px' }}>Menu Generator</h1>
@@ -524,6 +606,11 @@ const MenuGeneratorApp = () => {
       <div style={{ padding: '20px' }}>
         <h4 style={{ margin: '0' }}>MAX MENU DEPTH: {menuDepth}</h4>
       </div>
+      <div style={{ flex: '2', padding: '20px', textAlign: 'left' }}>
+          <h2>Code Preview</h2>
+          {/* Tutaj znajduje się okno wyświetlania kodu */}
+          {displayCodeWindow()}
+        </div>
     </div>
   );
 };
