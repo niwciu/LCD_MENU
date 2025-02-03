@@ -140,13 +140,21 @@ const MenuGeneratorApp = () => {
   };
 
 
+  const updateCallbackRecursively = (items, id, callbackName) => {
+    return items.map(item => {
+      if (item.id === id) {
+        return { ...item, callbackName };
+      }
+      if (item.children && item.children.length > 0) {
+        return { ...item, children: updateCallbackRecursively(item.children, id, callbackName) };
+      }
+      return item;
+    });
+  };
+  
   const handleCallbackChange = (id, callbackName) => {
-    const updatedMenuItems = [...menuItems];
-    const itemIndex = updatedMenuItems.findIndex(item => item.id === id);
-    if (itemIndex !== -1) {
-      updatedMenuItems[itemIndex].callbackName = callbackName; // Zaktualizuj callbackName
-      setMenuItems(updatedMenuItems); // Zaktualizuj stan
-    }
+    const updatedMenuItems = updateCallbackRecursively(menuItems, id, callbackName);
+    setMenuItems(updatedMenuItems);
   };
   
   
