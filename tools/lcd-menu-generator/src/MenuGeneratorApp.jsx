@@ -437,11 +437,37 @@ const MenuGeneratorApp = () => {
   // Funkcja do zapisu struktury menu do pliku
   const saveMenuToFile = () => {
     const blob = new Blob([JSON.stringify(menuItems)], { type: 'application/json' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'menu_structure.json';
-    link.click();
+  
+    // Poprosimy użytkownika o nazwę pliku
+    const fileName = prompt("Podaj nazwę pliku:", "menu_structure.json");
+  
+    // Jeśli użytkownik nie podał nazwy, użyjemy domyślnej
+    if (!fileName) {
+      alert("Nazwa pliku jest wymagana!");
+      return;
+    }
+  
+    // Tworzymy element <a> do pobrania pliku
+    const a = document.createElement('a');
+    
+    // Tworzymy URL dla obiektu Blob
+    const url = URL.createObjectURL(blob);
+  
+    // Ustawiamy właściwości dla linku do pobrania
+    a.href = url;
+    a.download = fileName; // Używamy nazwy wprowadzonej przez użytkownika
+  
+    // Symulujemy kliknięcie na link, co powoduje pobranie pliku
+    a.click();
+  
+    // Zwolnienie zasobów URL
+    URL.revokeObjectURL(url);
   };
+  
+    
+    
+  
+  
 
   // Funkcja do wczytania struktury menu z pliku
   const loadMenuFromFile = (event) => {
