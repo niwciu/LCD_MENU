@@ -163,16 +163,34 @@ const MenuGeneratorApp = () => {
   const generateCode = () => {
     let generatedCode = '';
     let generatedHeaderCode = '';
-  
-    // Funkcja rekurencyjna do generowania deklaracji
+
+    // Funkcja rekurencyjna do generowania deklaracji funkcji callback
+    const generateCallbackDeclarations = (menuItems) => {
+      if (showCallbackName) {
+        menuItems.forEach((item) => {
+          if (item.callbackName && !callbackDeclarations.includes(item.callbackName)) {
+            // Dodajemy callback tylko, jeśli jeszcze go nie dodano
+            callbackDeclarations.push(item.callbackName);
+            generatedCode += `static void ${item.callbackName}(void);\n`;
+          }
+
+          // Rekursja dla dzieci
+          if (item.children && item.children.length > 0) {
+            generateCallbackDeclarations(item.children);
+          }
+        });
+      }
+    };
+
+    // Funkcja rekurencyjna do generowania deklaracji menu
     const generateMenuDeclarations = (menuItems, parentId = '', indentationLevel = 0) => {
       menuItems.forEach((item, index) => {
         const indentation = '  '.repeat(indentationLevel);
         const id = parentId ? `${parentId}_${index + 1}` : `menu_${index + 1}`;
-  
+    
         // Dodanie deklaracji
         generatedHeaderCode += `${indentation}extern menu_t ${id};\n`;
-  
+    
         // Jeśli są dzieci, wywołaj rekursję
         if (item.children && item.children.length > 0) {
           generateMenuDeclarations(item.children, id, indentationLevel + 1);
@@ -180,8 +198,8 @@ const MenuGeneratorApp = () => {
       });
     };
 
-    // Funkcja rekurencyjna do generowania definicji
-    const generateMenuDefinitions = (menuItems, parentId = '', previousId = null, indentationLevel = 1) => {
+    // Funkcja rekurencyjna do generowania definicji menu
+    const generateMenuDefinitions = (menuItems, parentId = '', previousId = null, indentationLevel = 0) => {
       menuItems.forEach((item, index) => {
         const id = parentId ? `${parentId}_${index + 1}` : `menu_${index + 1}`;
         
@@ -212,18 +230,21 @@ const MenuGeneratorApp = () => {
       });
     };
 
-    
-  
-    // 1. Generowanie deklaracji dla menu
+    // 1. Generowanie deklaracji funkcji callback
+    let callbackDeclarations = [];
+    generateCallbackDeclarations(menuItems);
+    generatedCode += "\n";
+    // 2. Generowanie deklaracji dla menu
     generateMenuDeclarations(menuItems);
-  
-    // 2. Generowanie definicji dla menu
+
+    // 3. Generowanie definicji dla menu
     generateMenuDefinitions(menuItems);
-  
+
     // Ustawienie wygenerowanego kodu w stanie
     setCode(generatedCode);
     setHeaderCode(generatedHeaderCode);
   };
+
   
   
   // Funkcja do wyświetlania kodu C z formatowaniem
@@ -436,12 +457,17 @@ const MenuGeneratorApp = () => {
 
   // Funkcja do zapisu struktury menu do pliku
   const saveMenuToFile = () => {
-    const blob = new Blob([JSON.stringify(menuItems)], { type: 'application/json' });
+    const dataToSave = {
+      menuItems: menuItems,
+      showCallbackName: showCallbackName // Dodajemy stan showCallbackName do danych
+    };
+  
+    const blob = new Blob([JSON.stringify(dataToSave)], { type: 'application/json' });
   
     // Poprosimy użytkownika o nazwę pliku
     const fileName = prompt("Podaj nazwę pliku:", "menu_structure.json");
   
-    // Jeśli użytkownik nie podał nazwy, użyjemy domyślnej
+    // Jeśli użytkownik nie podał nazwy, używamy domyślnej
     if (!fileName) {
       alert("Nazwa pliku jest wymagana!");
       return;
@@ -449,7 +475,7 @@ const MenuGeneratorApp = () => {
   
     // Tworzymy element <a> do pobrania pliku
     const a = document.createElement('a');
-    
+  
     // Tworzymy URL dla obiektu Blob
     const url = URL.createObjectURL(blob);
   
@@ -464,11 +490,6 @@ const MenuGeneratorApp = () => {
     URL.revokeObjectURL(url);
   };
   
-    
-    
-  
-  
-
   // Funkcja do wczytania struktury menu z pliku
   const loadMenuFromFile = (event) => {
     const file = event.target.files[0];
@@ -476,19 +497,25 @@ const MenuGeneratorApp = () => {
       const reader = new FileReader();
       reader.onload = () => {
         const data = JSON.parse(reader.result);
-        setMenuItems(data);
+  
+        // Ustawienie menu
+        setMenuItems(data.menuItems);
+  
+        // Ustawienie stanu dla showCallbackName
+        setShowCallbackName(data.showCallbackName);
   
         // Obliczanie głębokości po załadowaniu menu z pliku
-        const depth = calculateDepth(data);
+        const depth = calculateDepth(data.menuItems);
         setMenuDepth(depth);  // Ustawienie głębokości
   
         // Znajdź najwyższe ID w strukturze
-        const maxId = getMaxIdFromItems(data);
+        const maxId = getMaxIdFromItems(data.menuItems);
         setIdCounter(maxId + 1);  // Ustaw idCounter na najwyższe ID + 1
       };
       reader.readAsText(file);
     }
   };
+  
 
   // Funkcja pomocnicza do znajdowania najwyższego ID w strukturze
   const getMaxIdFromItems = (items) => {
@@ -576,110 +603,120 @@ const MenuGeneratorApp = () => {
     ));
   };
 
-  return (
-    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-      <h1 style={{ marginBottom: '10px' }}>Menu Generator</h1>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
-        {/* Przycisk zapisu */}
-        <button
-          onClick={saveMenuToFile}
-          style={{
-            padding: '5px 10px',
-            fontSize: '20px',
-            marginLeft: '10px',
-            cursor: 'pointer',
-            borderRadius: '50%',
-            border: '2px solid #4CAF50',
-            backgroundColor: '#fff',
-            color: '#4CAF50',
-          }}
-        >
-          <FaSave />
-        </button>
-
-        {/* Przycisk wczytywania */}
-        <input
-          type="file"
-          onChange={loadMenuFromFile}
-          style={{ display: 'none' }}
-          id="file-input"
-        />
-        <button
-          onClick={() => document.getElementById('file-input').click()}
-          style={{
-            padding: '5px 10px',
-            fontSize: '20px',
-            marginLeft: '10px',
-            cursor: 'pointer',
-            borderRadius: '50%',
-            border: '2px solid #4CAF50',
-            backgroundColor: '#fff',
-            color: '#4CAF50',
-          }}
-        >
-          <FaFolderOpen />
-        </button>
-
-        {/* Przycisk nadawania nowych ID */}
-        <button
-        onClick={resetMenuIds}
+    return (
+    <div style={{ fontFamily: 'Arial, sans-serif' }}>
+      {/* Stały nagłówek */}
+      <header
         style={{
-          padding: '5px 10px',
-          fontSize: '20px',
-          marginLeft: '10px',
-          cursor: 'pointer',
-          borderRadius: '50%',
-          border: '2px solid #4CAF50',
-          backgroundColor: '#fff',
-          color: '#4CAF50',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          backgroundColor: '#282828',
+          padding: '10px 20px',
+          zIndex: 1000,
+          boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)'
         }}
       >
-        <FaEdit />
-      </button>
+        <h2 style={{ marginBottom: '10px' }}>Menu Generator</h2>
 
-      </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+          {/* Przycisk dodawania menu */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <h3 style={{ margin: 0, paddingLeft: '20px' }}>MENU</h3>
+            <button 
+              onClick={addMenuItem} 
+              style={{
+                padding: '5px 10px',
+                fontSize: '16px',
+                marginLeft: '5px',
+                cursor: 'pointer',
+                borderRadius: '4px',
+                marginRight: '20px' // Dodaj odstęp między przyciskiem + a kolejnymi przyciskami
+              }}>
+              <FaPlus />
+            </button>
+          </div>
 
-      {/* Globalny checkbox */}
-      <div>
-        <input
-          type="checkbox"
-          checked={showCallbackName}
-          onChange={toggleCallbackNameVisibility}
-          style={{ marginRight: '10px' }}
-        />
-        <span>Enable menu items execute callback generation</span>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px', marginTop: '40px' }}>
-        <h3 style={{ margin: 0, paddingLeft: '20px' }}>MENU</h3>
+          {/* Przycisk zapisu */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <button onClick={saveMenuToFile} 
+            style={{
+              padding: '5px 10px',
+              fontSize: '20px',
+              marginLeft: '10px',
+              cursor: 'pointer',
+              borderRadius: '50%',
+              border: '2px solid #4CAF50',
+              backgroundColor: '#fff',
+              color: '#4CAF50',
+            }}
+            >
+              <FaSave />
+            </button>
 
-        {/* Przycisk dodawania menu */}
-        <button
-          onClick={addMenuItem}
-          style={{
-            padding: '5px 10px',
-            fontSize: '16px',
-            marginLeft: '5px',
-            cursor: 'pointer',
-            borderRadius: '4px',
-          }}
-        >
-          <FaPlus />
-        </button>
-      </div>
-      <div style={{ paddingLeft: '40px' }}>
-        {renderMenuItems(menuItems)}
-      </div>
-      <div style={{ padding: '20px' }}>
-        <h4 style={{ margin: '0' }}>MAX MENU DEPTH: {menuDepth}</h4>
-      </div>
-      <div style={{ flex: '2', padding: '20px', textAlign: 'left' }}>
+            {/* Przycisk wczytywania */}
+            <input type="file" onChange={loadMenuFromFile} style={{ display: 'none' }} id="file-input" />
+            <button onClick={() => document.getElementById('file-input').click()} 
+              style={{
+                padding: '5px 10px',
+                fontSize: '20px',
+                marginLeft: '10px',
+                cursor: 'pointer',
+                borderRadius: '50%',
+                border: '2px solid #4CAF50',
+                backgroundColor: '#fff',
+                color: '#4CAF50',
+              }}
+            >
+              <FaFolderOpen />
+            </button>
+
+            {/* Przycisk nadawania nowych ID */}
+            <button onClick={resetMenuIds} 
+            style={{
+              padding: '5px 10px',
+              fontSize: '20px',
+              marginLeft: '10px',
+              cursor: 'pointer',
+              borderRadius: '50%',
+              border: '2px solid #4CAF50',
+              backgroundColor: '#fff',
+              color: '#4CAF50',
+            }}
+            >
+              <FaEdit />
+            </button>
+          </div>
+
+          {/* Globalny checkbox */}
+          <div style={{paddingLeft:'20px'}}>
+            <input type="checkbox" checked={showCallbackName} onChange={toggleCallbackNameVisibility} id="callback-toggle" />
+            <label htmlFor="callback-toggle" style={{ marginLeft: '5px' }}>
+              Enable menu items execute callback generation
+            </label>
+          </div>
+        </div>
+
+      </header>
+
+      {/* Główna zawartość strony */}
+      { <div style={{ padding: '140px 20px 20px' }}>
+        <div style={{ paddingLeft: '40px' }}>{renderMenuItems(menuItems)}</div>
+
+        { <div style={{ padding: '20px' }}>
+          <h4 style={{ margin: '0' }}>MAX MENU DEPTH: {menuDepth}</h4>
+        </div> }
+
+        { <div style={{ flex: '2', padding: '20px', textAlign: 'left' }}>
           <h2>Code Preview</h2>
-          {/* Tutaj znajduje się okno wyświetlania kodu */}
           {displayCodeWindow()}
           {displayHeaderWindow()}
-        </div>
+        </div> }
+      </div> }
     </div>
   );
-};
+
+};  
 
 export default MenuGeneratorApp;
