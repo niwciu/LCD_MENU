@@ -162,7 +162,7 @@ const MenuGeneratorApp = () => {
   // Funkcja generująca kod w C
   const generateCode = () => {
     let generatedCode = '';
-    let generatedHeaderCode = '';
+    let generatedHeaderCode = '#define MAX_MENU_DEPTH '+menuDepth+'\n\n';;
 
     // Funkcja rekurencyjna do generowania deklaracji funkcji callback
     const generateCallbackDeclarations = (menuItems) => {
