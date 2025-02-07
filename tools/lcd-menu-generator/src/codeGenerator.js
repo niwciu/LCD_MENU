@@ -1,4 +1,6 @@
-// Funkcja generująca kod w C
+// codeGenerator.js
+// This module generates C code based on the menu structure.
+
 export const generateCode = (menuItems, menuDepth, showCallbackName, setCode, setHeaderCode) => {
     let generatedCode = '';
     const currentDate = new Date();
@@ -163,5 +165,4 @@ export const generateCode = (menuItems, menuDepth, showCallbackName, setCode, se
     // Ustawienie wygenerowanego kodu w stanach
     setCode(generatedCode);
     setHeaderCode(generatedHeaderCode);
-  };
-  
+};
