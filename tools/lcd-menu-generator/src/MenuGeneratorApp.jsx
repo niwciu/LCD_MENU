@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { FaSave, FaFolderOpen, FaPlus, FaTrash, FaArrowUp, FaArrowDown, FaEdit } from 'react-icons/fa'; // Dodajemy ikony
-import SyntaxHighlighter from 'react-syntax-highlighter';
-import { darcula } from 'react-syntax-highlighter/dist/esm/styles/hljs';
+import DisplayCodeWindow from './DisplayCodeWindow';
 
 // Komponent pojedynczego obiektu w menu (może mieć podobiekty)
 const MenuItem = ({ item, onRename, onMoveUp, onMoveDown, onDelete, onAddChild, showCallbackName, parentId, onUpdateCallback }) => {
@@ -162,112 +161,178 @@ const MenuGeneratorApp = () => {
   // Funkcja generująca kod w C
   const generateCode = () => {
     let generatedCode = '';
-    let generatedHeaderCode = '#define MAX_MENU_DEPTH '+menuDepth+'\n\n';;
+    // Pobranie bieżącej daty i roku
+    const currentDate = new Date();
+    const currentDateString = currentDate.toISOString().split('T')[0]; // Data w formacie YYYY-MM-DD
+    const currentYear = currentDate.getFullYear(); // Rok
+    const FileDoxyMainContent =
+      ' * @author LCD menu code generator app writtne by niwciu (niwciu@gmail.com)\n' +
+      ' * @brief\n' +
+      ' * @date ' + currentDateString + '\n' +  // Wstawienie aktualnej daty
+      ' *\n'+
+      ' * @copyright Copyright (c) ' + currentYear + '\n' +  // Wstawienie aktualnego roku
+      ' *\n'+
+      ' */\n';
+    
 
+    // Tworzenie zawartości pliku nagłówka
+    let menuHeaderFileStartContent = 
+      '/**\n' +
+      ' * @file menu.h\n' +
+      FileDoxyMainContent+
+      '#ifndef _MENU_H_\n'  +
+      '#define _MENU_H_\n\n'  +
+      '#ifdef __cplusplus\n' +
+      'extern "C"\n'  +
+      '{\n' +
+      '#endif /* __cplusplus */\n\n'  +
+      '#include "menu_lib_type.h"\n' +
+      '\n';
+
+    let menuHeaderFileEndContent = '\n'+
+      '/**@}*/\n' +
+      '#ifdef __cplusplus\n'  +
+      '}\n' +
+      '#endif /* __cplusplus */\n'  +
+      '#endif /* _MENU_H_ */\n';
+
+    let generatedHeaderCode = menuHeaderFileStartContent+ '#define MAX_MENU_DEPTH '+menuDepth+'\n';
+
+    let menuCFileStartContent = 
+    '/**\n' +
+    ' * @file menu.c\n' +
+    FileDoxyMainContent + 
+    '\n'+
+    '#include "menu.h"\n'+
+    '#include <stddef.h>\n\n';
+
+    // dodanie nagłówka doxygen dla pliku C
+    generatedCode =menuCFileStartContent;
+    
+    // Krok 1: Przeskanuj menu, aby zliczyć wystąpienia poszczególnych displayName
+    const labelCounts = {};
+    const countLabels = (items) => {
+      items.forEach(item => {
+        labelCounts[item.displayName] = (labelCounts[item.displayName] || 0) + 1;
+        if (item.children && item.children.length > 0) {
+          countLabels(item.children);
+        }
+      });
+    };
+    countLabels(menuItems);
+  
+    // Krok 2: Dla etykiet występujących więcej niż raz, wygeneruj nazwę stałej
+    const labelConstants = {};
+    Object.keys(labelCounts).forEach(label => {
+      if (labelCounts[label] > 1) {
+        // Utwórz nazwę stałej: LABEL_<NAZWA WIELKIMI LITERAMI, z ewentualnymi znakami zastąpionymi podkreśleniami>
+        const constantName = 'LABEL_' + label
+          .toUpperCase()
+          .replace(/[ąćęłńóśżźĄĆĘŁŃÓŚŻŹ]/g, (match) => {
+            const map = {
+              'ą': 'A', 'ć': 'C', 'ę': 'E', 'ł': 'L', 'ń': 'N', 'ó': 'O', 'ś': 'S', 'ż': 'Z', 'ź': 'Z',
+              'Ą': 'A', 'Ć': 'C', 'Ę': 'E', 'Ł': 'L', 'Ń': 'N', 'Ó': 'O', 'Ś': 'S', 'Ż': 'Z', 'Ź': 'Z'
+            };
+            return map[match] || match;
+          })
+          .replace(/\.(?=\S)/g, '_')   // Zamienia kropkę na podkreślnik tylko wtedy, gdy po kropce nie ma spacji
+          .replace(/ /g, '_')         // Zamienia wszystkie spacje na podkreślniki
+          .replace(/[^A-Z0-9_]/g, '') // Usuwa wszystkie inne znaki, ale pozostawia podkreślniki
+          .trim();                    // Usuwa ewentualne białe znaki na początku i końcu
+        labelConstants[label] = constantName;
+      }
+    });
+  
+    // Krok 3: Wygeneruj globalne definicje etykiet (np. umieszczane w pliku nagłówkowym)
+    Object.keys(labelConstants).forEach(label => {
+      generatedCode += `static const char ${labelConstants[label]}[] = "${label}";\n`;
+    });
+  
     // Funkcja rekurencyjna do generowania deklaracji funkcji callback
     const generateCallbackDeclarations = (menuItems) => {
       if (showCallbackName) {
         menuItems.forEach((item) => {
           if (item.callbackName && !callbackDeclarations.includes(item.callbackName)) {
-            // Dodajemy callback tylko, jeśli jeszcze go nie dodano
             callbackDeclarations.push(item.callbackName);
             generatedCode += `static void ${item.callbackName}(void);\n`;
           }
-
-          // Rekursja dla dzieci
           if (item.children && item.children.length > 0) {
             generateCallbackDeclarations(item.children);
           }
         });
       }
     };
-
-    // Funkcja rekurencyjna do generowania deklaracji menu
-    const generateMenuDeclarations = (menuItems, parentId = '', indentationLevel = 0) => {
+  
+    // Funkcja rekurencyjna do generowania deklaracji menu (np. zewnętrzne "extern")
+    const generateMenuDeclarations = (menuItems, parentId = '', indentationLevel = 1) => {
       menuItems.forEach((item, index) => {
         const indentation = '  '.repeat(indentationLevel);
         const id = parentId ? `${parentId}_${index + 1}` : `menu_${index + 1}`;
-    
-        // Dodanie deklaracji
         generatedHeaderCode += `${indentation}extern menu_t ${id};\n`;
-    
-        // Jeśli są dzieci, wywołaj rekursję
         if (item.children && item.children.length > 0) {
           generateMenuDeclarations(item.children, id, indentationLevel + 1);
         }
       });
     };
-
+  
     // Funkcja rekurencyjna do generowania definicji menu
     const generateMenuDefinitions = (menuItems, parentId = '', previousId = null, indentationLevel = 0) => {
       menuItems.forEach((item, index) => {
         const id = parentId ? `${parentId}_${index + 1}` : `menu_${index + 1}`;
-        
-        // Generowanie nextId, prevId, childId, parentId
         const nextId = index < menuItems.length - 1 ? `${parentId ? parentId : 'menu'}_${index + 2}` : 'NULL';
         const prevId = index > 0 ? `${parentId ? parentId : 'menu'}_${index}` : 'NULL';
         const childId = item.children && item.children.length > 0 ? `${id}_1` : 'NULL';
         const parentIdValue = parentId ? parentId : 'NULL';
-        
-        // Callback Name (bez cudzysłowów, jeśli istnieje callbackName)
         const callbackValue = item.callbackName ? item.callbackName : 'NULL';
-        
-        // Zmienna wcięcia
+  
+        // Sprawdzenie, czy dla item.displayName mamy zdefiniowaną stałą; jeśli tak – użyjemy jej, w przeciwnym razie literal
+        const labelValue = labelConstants[item.displayName] 
+                              ? labelConstants[item.displayName] 
+                              : `"${item.displayName}"`;
+  
         const indentation = '  '.repeat(indentationLevel);
-        
-        // Generowanie definicji struktury menu_t
-        generatedCode += `${indentation}menu_t ${id} = { "${item.displayName}", `;
+        generatedCode += `${indentation}menu_t ${id} = { ${labelValue}, `;
         generatedCode += `${nextId !== 'NULL' ? `&${nextId}` : 'NULL'}, `;
         generatedCode += `${prevId !== 'NULL' ? `&${prevId}` : 'NULL'}, `;
         generatedCode += `${childId !== 'NULL' ? `&${childId}` : 'NULL'}, `;
         generatedCode += `${parentIdValue !== 'NULL' ? `&${parentIdValue}` : 'NULL'}, `;
         generatedCode += `${callbackValue !== 'NULL' ? callbackValue : 'NULL'} };\n`;
-        
-        // Rekursja dla dzieci
+  
         if (item.children && item.children.length > 0) {
           generateMenuDefinitions(item.children, id, prevId, indentationLevel + 1);
         }
       });
     };
-
+  
     // 1. Generowanie deklaracji funkcji callback
     let callbackDeclarations = [];
+    if (generatedCode) { // Sprawdzamy, czy generatedCode nie jest pusty
+      generatedCode += '\n'; // Dodajemy pustą linię przed definicjami menu
+    }
     generateCallbackDeclarations(menuItems);
-    generatedCode += "\n";
+
     // 2. Generowanie deklaracji dla menu
+    if (generatedHeaderCode) {
+      generatedHeaderCode += '\n'; // Dodajemy pustą linię przed sekcją definicji menu
+    }
     generateMenuDeclarations(menuItems);
 
+    // dodanie footera pliku h
+    generatedHeaderCode+=menuHeaderFileEndContent;
+    
+  
     // 3. Generowanie definicji dla menu
+    if (generatedCode) { // Sprawdzamy, czy generatedCode nie jest pusty
+      generatedCode += '\n'; // Dodajemy pustą linię przed definicjami menu
+    }
     generateMenuDefinitions(menuItems);
-
-    // Ustawienie wygenerowanego kodu w stanie
+    
+  
+    // Ustawienie wygenerowanego kodu w stanach
     setCode(generatedCode);
     setHeaderCode(generatedHeaderCode);
   };
-
   
-  
-  // Funkcja do wyświetlania kodu C z formatowaniem
-  const displayHeaderWindow = () => (
-    <div style={{ marginTop: '40px', backgroundColor: '#2d2d2d', padding: '20px', borderRadius: '5px' }}>
-      <h3 style={{ color: '#fff' }}>menu.h</h3>
-      <SyntaxHighlighter language="c" style={darcula  }> 
-        {menuHeaderCode}
-      </SyntaxHighlighter>
-    </div>
-  );
-  
-  
-
-  // Funkcja do wyświetlania kodu C z formatowaniem
-  const displayCodeWindow = () => (
-    <div style={{ marginTop: '40px', backgroundColor: '#2d2d2d', padding: '20px', borderRadius: '5px' }}>
-      <h3 style={{ color: '#fff' }}>menu.c</h3>
-      <SyntaxHighlighter language="c" style={darcula  }> 
-        {code}
-      </SyntaxHighlighter>
-    </div>
-  );
 
   // Funkcja do obliczania głębokości menu
   const calculateDepth = (items) => {
@@ -710,8 +775,8 @@ const MenuGeneratorApp = () => {
 
         { <div style={{ flex: '2', padding: '20px', textAlign: 'left' }}>
           <h2>Code Preview</h2>
-          {displayCodeWindow()}
-          {displayHeaderWindow()}
+          <DisplayCodeWindow code={code} />
+          <DisplayCodeWindow code={menuHeaderCode} />
         </div> }
       </div> }
     </div>
