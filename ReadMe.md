@@ -5,3 +5,5 @@ Tools that are used along with this project template and need to be instaled
 4) Ninja
 5) Git 
 6) LLVM
+
+[Zobacz aplikację](https://niwciu.github.io/LCD_MENU/app/)
