@@ -121,7 +121,7 @@ export const generateCode = (menuItems, menuDepth, showCallbackName, setCode, se
     };
   
     // Funkcja rekurencyjna do generowania definicji menu
-    const generateMenuDefinitions = (menuItems, parentId = '', previousId = null, indentationLevel = 0) => {
+    const generateMenuDefinitions = (menuItems, parentId = '', indentationLevel = 0) => {
       menuItems.forEach((item, index) => {
         const id = parentId ? `${parentId}_${index + 1}` : `menu_${index + 1}`;
         const nextId = index < menuItems.length - 1 ? `${parentId ? parentId : 'menu'}_${index + 2}` : 'NULL';

@@ -1,7 +1,9 @@
 import { useState } from "react";
+import PropTypes from "prop-types"; 
 import { Clipboard, Download } from "lucide-react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import vscDarkPlus from "react-syntax-highlighter/dist/cjs/styles/prism/vsc-dark-plus";
+
 
 const DisplayCodeWindow = ({ code, fileName }) => {
   const [copied, setCopied] = useState(false);
@@ -138,6 +140,12 @@ const DisplayCodeWindow = ({ code, fileName }) => {
       </button>
     </div>
   );
+};
+
+// **Dodaj walidację propTypes**
+DisplayCodeWindow.propTypes = {
+  code: PropTypes.string.isRequired,  // `code` musi być stringiem i jest wymagany
+  fileName: PropTypes.string          // `fileName` jest opcjonalnym stringiem
 };
 
 export default DisplayCodeWindow;

@@ -1,5 +1,4 @@
 
-import React from 'react';
 import './App.css';
 import MenuGeneratorApp from './MenuGeneratorApp'; // Importujemy nasz nowy komponent
 

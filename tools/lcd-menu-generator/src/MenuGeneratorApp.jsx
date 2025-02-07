@@ -1,6 +1,6 @@
 // MenuGeneratorApp.jsx
 import { useState } from 'react';
-import { FaSave, FaFolderOpen, FaPlus, FaTrash, FaArrowUp, FaArrowDown, FaEdit } from 'react-icons/fa';
+import { FaSave, FaFolderOpen, FaPlus, FaEdit } from 'react-icons/fa';
 import DisplayCodeWindow from './displayCodeWindow';
 import MenuItem from './menuItem';
 import { generateCode } from './codeGenerator';
@@ -14,7 +14,6 @@ import {
   addItem, 
   findItemById, 
   getMaxIdFromItems, 
-  resetIds 
 } from './menuUtils';
 import { saveMenuToFile, loadMenuFromFile } from './fileUtils';
 

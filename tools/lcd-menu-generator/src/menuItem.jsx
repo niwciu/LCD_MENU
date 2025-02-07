@@ -1,4 +1,4 @@
-import React from 'react';
+import PropTypes from "prop-types"; 
 import { FaArrowUp, FaArrowDown, FaTrash, FaPlus } from 'react-icons/fa';
 
 const MenuItem = ({ item, onRename, onMoveUp, onMoveDown, onDelete, onAddChild, showCallbackName, parentId, onUpdateCallback }) => {
@@ -121,6 +121,24 @@ const MenuItem = ({ item, onRename, onMoveUp, onMoveDown, onDelete, onAddChild, 
       </button>
     </div>
   );
+};
+
+MenuItem.propTypes = {
+  item: PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    displayName: PropTypes.string.isRequired,
+    level: PropTypes.number,
+    callbackName: PropTypes.string,
+    children: PropTypes.arrayOf(PropTypes.object)
+  }).isRequired,
+  onRename: PropTypes.func.isRequired,
+  onMoveUp: PropTypes.func.isRequired,
+  onMoveDown: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
+  onAddChild: PropTypes.func.isRequired,
+  showCallbackName: PropTypes.bool,
+  parentId: PropTypes.number,
+  onUpdateCallback: PropTypes.func.isRequired
 };
 
 export default MenuItem;
