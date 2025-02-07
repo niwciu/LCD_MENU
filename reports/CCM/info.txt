@@ -1,2 +1,0 @@
-This folder is prepared for targers generating code coverage reports. ->ccmr
-Delete this file after generating first report.
