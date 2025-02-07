@@ -101,6 +101,13 @@ export const generateCode = (menuItems, menuDepth, showCallbackName, setCode, se
       }
     };
   
+    // Funkcja do generowania definicji pustych callbacków
+    const generateCallbackDefinitions = () => {
+      callbackDeclarations.forEach((callbackName) => {
+        generatedCode += `static void ${callbackName}(void) {\n\n}\n\n`;  // Zamieniamy średnik na definicję funkcji z ciałem
+      });
+    };
+
     // Funkcja rekurencyjna do generowania deklaracji menu
     const generateMenuDeclarations = (menuItems, parentId = '', indentationLevel = 1) => {
       menuItems.forEach((item, index) => {
@@ -148,7 +155,7 @@ export const generateCode = (menuItems, menuDepth, showCallbackName, setCode, se
     }
     generateCallbackDeclarations(menuItems);
   
-    // 2. Generowanie deklaracji dla menu
+    // 3. Generowanie deklaracji dla menu
     if (generatedHeaderCode) {
       generatedHeaderCode += '\n';
     }
@@ -156,11 +163,17 @@ export const generateCode = (menuItems, menuDepth, showCallbackName, setCode, se
   
     generatedHeaderCode += menuHeaderFileEndContent;
   
-    // 3. Generowanie definicji dla menu
+    // 4. Generowanie definicji dla menu
     if (generatedCode) {
       generatedCode += '\n';
     }
     generateMenuDefinitions(menuItems);
+    
+    // 2. Generowanie definicji pustych callbacków
+    if (generatedCode) {
+        generatedCode += '\n';
+    }
+    generateCallbackDefinitions();  // Tu dodajemy definicje callbacków
   
     // Ustawienie wygenerowanego kodu w stanach
     setCode(generatedCode);

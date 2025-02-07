@@ -241,8 +241,8 @@ const MenuGeneratorApp = () => {
         </div>
         <div style={{ flex: '2', padding: '20px', textAlign: 'left' }}>
           <h2>Code Preview</h2>
-          <DisplayCodeWindow code={code} />
-          <DisplayCodeWindow code={menuHeaderCode} />
+          <DisplayCodeWindow code={menuHeaderCode} fileName="menu.h"/>
+          <DisplayCodeWindow code={code} fileName="menu.c"/>
         </div>
       </div>
     </div>
