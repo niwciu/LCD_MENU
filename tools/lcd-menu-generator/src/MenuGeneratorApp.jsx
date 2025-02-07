@@ -1,129 +1,10 @@
 import { useState } from 'react';
 import { FaSave, FaFolderOpen, FaPlus, FaTrash, FaArrowUp, FaArrowDown, FaEdit } from 'react-icons/fa'; // Dodajemy ikony
-import DisplayCodeWindow from './DisplayCodeWindow';
+import DisplayCodeWindow from './displayCodeWindow';
+import MenuItem from './menuItem';
+import { generateCode } from './codeGenerator';  // Ścieżka zależna od lokalizacji pliku
 
-// Komponent pojedynczego obiektu w menu (może mieć podobiekty)
-const MenuItem = ({ item, onRename, onMoveUp, onMoveDown, onDelete, onAddChild, showCallbackName, parentId, onUpdateCallback }) => {
-  const isEditable = item.children.length === 0; // Jeśli obiekt nie ma dzieci, pole jest edytowalne
 
-  // Obsługa zmiany callbacka
-  const handleCallbackChange = (e) => {
-    onUpdateCallback(item.id, e.target.value); // Przesyłamy nową nazwę callbacka do rodzica
-  };
-
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px', paddingLeft: `${item.level * 20}px` }}>
-      {/* Pole edycji nazwy obiektu */}
-      <input
-        type="text"
-        value={item.displayName}
-        onChange={(e) => onRename(item.id, e.target.value)}
-        style={{
-          fontSize: '14px',
-          padding: '5px',
-          flexGrow: 1,
-          marginRight: '10px',
-          borderRadius: '4px',
-          width: '150px',
-        }}
-      />
-
-      {/* Pole tekstowe z podpowiedzią */}
-      {showCallbackName && (
-        <input
-          type="text"
-          placeholder={isEditable ? "Place callback function name..." : "Not available for parent objects"}
-          disabled={!isEditable} // Jeśli obiekt ma dzieci, pole jest wyłączone
-          style={{
-            fontSize: '13px',
-            padding: '5px',
-            marginRight: '10px',
-            width: '250px',
-            textAlign: 'left',
-            border: '1px solid #ddd',
-            borderRadius: '4px',
-            backgroundColor: isEditable ? '' : '#000000', // Zmieniamy tło na szare, gdy pole jest wyłączone
-          }}
-          value={item.callbackName||''} 
-          onChange={handleCallbackChange} // Aktualizacja callbackName
-        />
-      )}
-
-      {/* Wyświetlanie ID obiektu w nieedytowalnym polu */}
-      <input
-        type="text"
-        value={"ID: " + item.id}
-        readOnly
-        style={{
-          fontSize: '14px',
-          padding: '5px',
-          marginRight: '10px',
-          width: '150px',
-          textAlign: 'left',
-          backgroundColor: '#333',
-          color: '#fff',
-          border: '1px solid #ddd',
-          borderRadius: '4px',
-        }}
-      />
-
-      {/* Przycisk przesunięcia w górę */}
-      <button
-        onClick={() => onMoveUp(item.id, parentId)}
-        style={{
-          padding: '5px 10px',
-          fontSize: '16px',
-          marginRight: '5px',
-          cursor: 'pointer',
-          borderRadius: '4px',
-        }}
-      >
-        <FaArrowUp />
-      </button>
-      
-      {/* Przycisk przesunięcia w dół */}
-      <button
-        onClick={() => onMoveDown(item.id, parentId)}
-        style={{
-          padding: '5px 10px',
-          fontSize: '16px',
-          cursor: 'pointer',
-          borderRadius: '4px',
-        }}
-      >
-        <FaArrowDown />
-      </button>
-      
-      {/* Przycisk kosza - usuwanie obiektu */}
-      <button
-        onClick={() => onDelete(item.id, parentId)}
-        style={{
-          padding: '5px 10px',
-          fontSize: '16px',
-          marginLeft: '5px',
-          cursor: 'pointer',
-          borderRadius: '4px',
-        }}
-      >
-        <FaTrash />
-      </button>
-      
-      {/* Przycisk + (dodawanie podobiektu) */}
-      <button
-        onClick={() => onAddChild(item.id, parentId)}
-        style={{
-          padding: '5px 10px',
-          fontSize: '16px',
-          marginLeft: '5px',
-          cursor: 'pointer',
-          borderRadius: '4px',
-        }}
-      >
-        <FaPlus />
-      </button>
-    </div>
-  );
-};
 
 // Komponent główny aplikacji
 const MenuGeneratorApp = () => {
@@ -138,6 +19,9 @@ const MenuGeneratorApp = () => {
     setShowCallbackName(prevState => !prevState);
   };
 
+  const handleGenerateCode = () => {
+    generateCode(menuItems, menuDepth, showCallbackName, setCode, setHeaderCode);
+  };
 
   const updateCallbackRecursively = (items, id, callbackName) => {
     return items.map(item => {
@@ -154,183 +38,6 @@ const MenuGeneratorApp = () => {
   const handleCallbackChange = (id, callbackName) => {
     const updatedMenuItems = updateCallbackRecursively(menuItems, id, callbackName);
     setMenuItems(updatedMenuItems);
-  };
-  
-  
-
-  // Funkcja generująca kod w C
-  const generateCode = () => {
-    let generatedCode = '';
-    // Pobranie bieżącej daty i roku
-    const currentDate = new Date();
-    const currentDateString = currentDate.toISOString().split('T')[0]; // Data w formacie YYYY-MM-DD
-    const currentYear = currentDate.getFullYear(); // Rok
-    const FileDoxyMainContent =
-      ' * @author LCD menu code generator app writtne by niwciu (niwciu@gmail.com)\n' +
-      ' * @brief\n' +
-      ' * @date ' + currentDateString + '\n' +  // Wstawienie aktualnej daty
-      ' *\n'+
-      ' * @copyright Copyright (c) ' + currentYear + '\n' +  // Wstawienie aktualnego roku
-      ' *\n'+
-      ' */\n';
-    
-
-    // Tworzenie zawartości pliku nagłówka
-    let menuHeaderFileStartContent = 
-      '/**\n' +
-      ' * @file menu.h\n' +
-      FileDoxyMainContent+
-      '#ifndef _MENU_H_\n'  +
-      '#define _MENU_H_\n\n'  +
-      '#ifdef __cplusplus\n' +
-      'extern "C"\n'  +
-      '{\n' +
-      '#endif /* __cplusplus */\n\n'  +
-      '#include "menu_lib_type.h"\n' +
-      '\n';
-
-    let menuHeaderFileEndContent = '\n'+
-      '/**@}*/\n' +
-      '#ifdef __cplusplus\n'  +
-      '}\n' +
-      '#endif /* __cplusplus */\n'  +
-      '#endif /* _MENU_H_ */\n';
-
-    let generatedHeaderCode = menuHeaderFileStartContent+ '#define MAX_MENU_DEPTH '+menuDepth+'\n';
-
-    let menuCFileStartContent = 
-    '/**\n' +
-    ' * @file menu.c\n' +
-    FileDoxyMainContent + 
-    '\n'+
-    '#include "menu.h"\n'+
-    '#include <stddef.h>\n\n';
-
-    // dodanie nagłówka doxygen dla pliku C
-    generatedCode =menuCFileStartContent;
-    
-    // Krok 1: Przeskanuj menu, aby zliczyć wystąpienia poszczególnych displayName
-    const labelCounts = {};
-    const countLabels = (items) => {
-      items.forEach(item => {
-        labelCounts[item.displayName] = (labelCounts[item.displayName] || 0) + 1;
-        if (item.children && item.children.length > 0) {
-          countLabels(item.children);
-        }
-      });
-    };
-    countLabels(menuItems);
-  
-    // Krok 2: Dla etykiet występujących więcej niż raz, wygeneruj nazwę stałej
-    const labelConstants = {};
-    Object.keys(labelCounts).forEach(label => {
-      if (labelCounts[label] > 1) {
-        // Utwórz nazwę stałej: LABEL_<NAZWA WIELKIMI LITERAMI, z ewentualnymi znakami zastąpionymi podkreśleniami>
-        const constantName = 'LABEL_' + label
-          .toUpperCase()
-          .replace(/[ąćęłńóśżźĄĆĘŁŃÓŚŻŹ]/g, (match) => {
-            const map = {
-              'ą': 'A', 'ć': 'C', 'ę': 'E', 'ł': 'L', 'ń': 'N', 'ó': 'O', 'ś': 'S', 'ż': 'Z', 'ź': 'Z',
-              'Ą': 'A', 'Ć': 'C', 'Ę': 'E', 'Ł': 'L', 'Ń': 'N', 'Ó': 'O', 'Ś': 'S', 'Ż': 'Z', 'Ź': 'Z'
-            };
-            return map[match] || match;
-          })
-          .replace(/\.(?=\S)/g, '_')   // Zamienia kropkę na podkreślnik tylko wtedy, gdy po kropce nie ma spacji
-          .replace(/ /g, '_')         // Zamienia wszystkie spacje na podkreślniki
-          .replace(/[^A-Z0-9_]/g, '') // Usuwa wszystkie inne znaki, ale pozostawia podkreślniki
-          .trim();                    // Usuwa ewentualne białe znaki na początku i końcu
-        labelConstants[label] = constantName;
-      }
-    });
-  
-    // Krok 3: Wygeneruj globalne definicje etykiet (np. umieszczane w pliku nagłówkowym)
-    Object.keys(labelConstants).forEach(label => {
-      generatedCode += `static const char ${labelConstants[label]}[] = "${label}";\n`;
-    });
-  
-    // Funkcja rekurencyjna do generowania deklaracji funkcji callback
-    const generateCallbackDeclarations = (menuItems) => {
-      if (showCallbackName) {
-        menuItems.forEach((item) => {
-          if (item.callbackName && !callbackDeclarations.includes(item.callbackName)) {
-            callbackDeclarations.push(item.callbackName);
-            generatedCode += `static void ${item.callbackName}(void);\n`;
-          }
-          if (item.children && item.children.length > 0) {
-            generateCallbackDeclarations(item.children);
-          }
-        });
-      }
-    };
-  
-    // Funkcja rekurencyjna do generowania deklaracji menu (np. zewnętrzne "extern")
-    const generateMenuDeclarations = (menuItems, parentId = '', indentationLevel = 1) => {
-      menuItems.forEach((item, index) => {
-        const indentation = '  '.repeat(indentationLevel);
-        const id = parentId ? `${parentId}_${index + 1}` : `menu_${index + 1}`;
-        generatedHeaderCode += `${indentation}extern menu_t ${id};\n`;
-        if (item.children && item.children.length > 0) {
-          generateMenuDeclarations(item.children, id, indentationLevel + 1);
-        }
-      });
-    };
-  
-    // Funkcja rekurencyjna do generowania definicji menu
-    const generateMenuDefinitions = (menuItems, parentId = '', previousId = null, indentationLevel = 0) => {
-      menuItems.forEach((item, index) => {
-        const id = parentId ? `${parentId}_${index + 1}` : `menu_${index + 1}`;
-        const nextId = index < menuItems.length - 1 ? `${parentId ? parentId : 'menu'}_${index + 2}` : 'NULL';
-        const prevId = index > 0 ? `${parentId ? parentId : 'menu'}_${index}` : 'NULL';
-        const childId = item.children && item.children.length > 0 ? `${id}_1` : 'NULL';
-        const parentIdValue = parentId ? parentId : 'NULL';
-        const callbackValue = item.callbackName ? item.callbackName : 'NULL';
-  
-        // Sprawdzenie, czy dla item.displayName mamy zdefiniowaną stałą; jeśli tak – użyjemy jej, w przeciwnym razie literal
-        const labelValue = labelConstants[item.displayName] 
-                              ? labelConstants[item.displayName] 
-                              : `"${item.displayName}"`;
-  
-        const indentation = '  '.repeat(indentationLevel);
-        generatedCode += `${indentation}menu_t ${id} = { ${labelValue}, `;
-        generatedCode += `${nextId !== 'NULL' ? `&${nextId}` : 'NULL'}, `;
-        generatedCode += `${prevId !== 'NULL' ? `&${prevId}` : 'NULL'}, `;
-        generatedCode += `${childId !== 'NULL' ? `&${childId}` : 'NULL'}, `;
-        generatedCode += `${parentIdValue !== 'NULL' ? `&${parentIdValue}` : 'NULL'}, `;
-        generatedCode += `${callbackValue !== 'NULL' ? callbackValue : 'NULL'} };\n`;
-  
-        if (item.children && item.children.length > 0) {
-          generateMenuDefinitions(item.children, id, prevId, indentationLevel + 1);
-        }
-      });
-    };
-  
-    // 1. Generowanie deklaracji funkcji callback
-    let callbackDeclarations = [];
-    if (generatedCode) { // Sprawdzamy, czy generatedCode nie jest pusty
-      generatedCode += '\n'; // Dodajemy pustą linię przed definicjami menu
-    }
-    generateCallbackDeclarations(menuItems);
-
-    // 2. Generowanie deklaracji dla menu
-    if (generatedHeaderCode) {
-      generatedHeaderCode += '\n'; // Dodajemy pustą linię przed sekcją definicji menu
-    }
-    generateMenuDeclarations(menuItems);
-
-    // dodanie footera pliku h
-    generatedHeaderCode+=menuHeaderFileEndContent;
-    
-  
-    // 3. Generowanie definicji dla menu
-    if (generatedCode) { // Sprawdzamy, czy generatedCode nie jest pusty
-      generatedCode += '\n'; // Dodajemy pustą linię przed definicjami menu
-    }
-    generateMenuDefinitions(menuItems);
-    
-  
-    // Ustawienie wygenerowanego kodu w stanach
-    setCode(generatedCode);
-    setHeaderCode(generatedHeaderCode);
   };
   
 
@@ -633,7 +340,7 @@ const MenuGeneratorApp = () => {
         if (updatedItem.children && updatedItem.children.length > 0) {
           updatedItem.children = updateIdsRecursively(updatedItem.children, newId);  // Rekurencyjnie nadawaj ID dzieciom
         }
-        generateCode(); 
+        handleGenerateCode();
         return updatedItem;
       });
       
