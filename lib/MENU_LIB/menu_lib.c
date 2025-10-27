@@ -9,7 +9,7 @@
  * Includes validation of menu depth, screen drawing, and safe handling of pointers.
  *
  * @copyright Copyright (c) 2025
- * 
+ *
  * @ingroup MenuLib
  * @{
  */
@@ -27,14 +27,14 @@
 #endif
 
 /* --- Constants --- */
-#define ADDITIONAL_SPACE_CHAR_QTY        2U      /**< Space padding in submenu headers */
-#define DEFAULT_MENU_HEADER_COLUMN       7U      /**< Default column for centered header text */
-#define STRING_START_POSITION            1U      /**< Column index for text after cursor marker */
-#define CURSOR_COLUMN_POSITION           0U      /**< Column index of cursor marker '>' */
-#define FIRST_ROW                        0U      /**< Index of the first display row */
-#define MENU_VIEW_FIRST_ROW              1U      /**< First row used for displaying menu items */
-#define FIRST_COLUMN                     0U      /**< Index of the first display column */
-#define HEADER_ROW_OFFSET                1U      /**< Offset between header and menu view */
+#define ADDITIONAL_SPACE_CHAR_QTY 2U  /**< Space padding in submenu headers */
+#define DEFAULT_MENU_HEADER_COLUMN 7U /**< Default column for centered header text */
+#define STRING_START_POSITION 1U      /**< Column index for text after cursor marker */
+#define CURSOR_COLUMN_POSITION 0U     /**< Column index of cursor marker '>' */
+#define FIRST_ROW 0U                  /**< Index of the first display row */
+#define MENU_VIEW_FIRST_ROW 1U        /**< First row used for displaying menu items */
+#define FIRST_COLUMN 0U               /**< Index of the first display column */
+#define HEADER_ROW_OFFSET 1U          /**< Offset between header and menu view */
 
 /* --- Internal state --- */
 PRIVATE bool menu_initialized = false; /**< Indicates if menu system has been initialized */
@@ -304,7 +304,7 @@ static uint8_t compute_menu_depth(const menu_t *menu)
 /**
  * @brief Validate menu view configuration.
  *
- * Ensures engine is initialized, the menu root is valid, 
+ * Ensures engine is initialized, the menu root is valid,
  * and the menu depth does not exceed the maximum allowed.
  *
  * @param root_menu Pointer to the root menu.
@@ -329,7 +329,6 @@ static menu_status_t validate_menu_view(const menu_t *root_menu)
 
     return status;
 }
-
 
 /**
  * @brief Initialize menu view internal state.
@@ -402,7 +401,6 @@ static void display_main_menu_header(void)
     menu_item_2_print = menu_1st_item;
 }
 
-
 /**
  * @brief Display header for submenu.
  *
@@ -434,7 +432,6 @@ static void display_sub_menu_header(void)
     /* Set pointer to first child menu item for rendering */
     menu_item_2_print = current_menu_pointer->parent->child;
 }
-
 
 /**
  * @brief Fill header row with dash characters.

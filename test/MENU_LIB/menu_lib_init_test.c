@@ -12,20 +12,18 @@ extern uint8_t menu_number_of_screen_lines;
 extern bool menu_initialized;
 extern const struct menu_screen_driver_interface_struct *DISPLAY;
 
-
 // DISPLAY mock
 extern const struct menu_screen_driver_interface_struct mock_menu_screen_driver_interface;
 
 TEST_GROUP(menu_lib_init);
 
-TEST_SETUP(menu_lib_init) 
+TEST_SETUP(menu_lib_init)
 {
-    menu_initialized = false; 
+    menu_initialized = false;
     init_mock_screen_driver();
 }
-TEST_TEAR_DOWN(menu_lib_init) 
-{ 
-
+TEST_TEAR_DOWN(menu_lib_init)
+{
 }
 
 TEST(menu_lib_init, WhenMenuInitThenMenuScreenSizeEqualToPassedConfigDataColumnCountAndRowCount)
@@ -101,7 +99,7 @@ TEST(menu_lib_init, WhenInitWithValidDisplayThenReturnOk)
 TEST(menu_lib_init, WhenInitWithNullDisplayThenReturnNoDisplayInterface)
 {
     // given
-    deinit_mock_screen_driver();  // mock zwraca NULL
+    deinit_mock_screen_driver(); // mock zwraca NULL
 
     // when
     menu_status_t status = menu_init();
@@ -111,11 +109,10 @@ TEST(menu_lib_init, WhenInitWithNullDisplayThenReturnNoDisplayInterface)
     TEST_ASSERT_FALSE(menu_initialized);
 }
 
-
 TEST(menu_lib_init, WhenInitWithIncompleteDisplayThenReturnIncompleteInterface)
 {
     // given
-    
+
     init_mock_incomplete_screen_driver();
 
     // when
@@ -128,5 +125,3 @@ TEST(menu_lib_init, WhenInitWithIncompleteDisplayThenReturnIncompleteInterface)
     // przywrócenie poprawnego mocka
     init_mock_screen_driver();
 }
-
-
