@@ -48,7 +48,7 @@ jobs:
       needs: [build_unit_tests]
       strategy:
         matrix:
-          path_type: [lib, test]   # prostsza macierz tylko z typem
+          path_type: [lib, test]   
       steps:
         - name: Checkout
           uses: actions/checkout@v4
