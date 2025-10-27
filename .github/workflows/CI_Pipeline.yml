@@ -1,4 +1,3 @@
-
 name: CI Pipeline
 on:
     workflow_dispatch: 
@@ -9,7 +8,7 @@ on:
         - develop
 env:
   # change my_lib to lib and library test module folder name. Note that folders in lib (containint library files) and in test (containing test files fr this library) should be the same 
-  lib_name: my_lib 
+  lib_name: MENU_LIB 
   CCN: 12
   Threshold: nloc=30
   arguments: 4
@@ -17,7 +16,7 @@ env:
   verbose: true
 
 jobs:
-    build_unit_tets:
+    build_unit_tests:
         name: Build Unit Tests
         runs-on: ubuntu-latest
         steps:
@@ -44,31 +43,38 @@ jobs:
                 overwrite: true
 
     run_clang-format_check:
-        name: Run Clang-format Check
-        strategy:
-          matrix:
-            path:
-              - check: 'lib/${{env.lib_name}}'
-                exclude: ''
-              - check: 'test'
-                exclude: '(hw_test|unity|template)'
-        runs-on: ubuntu-latest
-        needs: [build_unit_tets]
-        steps:
-            - name: checkout
-              uses: actions/checkout@v4
+      name: Run Clang-format Check
+      runs-on: ubuntu-latest
+      needs: [build_unit_tests]
+      strategy:
+        matrix:
+          path_type: [lib, test]   # prostsza macierz tylko z typem
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v4
 
-            - name: Run clang-format style check for C/C++/Protobuf programs.
-              uses: jidicula/clang-format-action@v4.13.0
-              with:
-                clang-format-version: '18'
-                check-path: ${{matrix.path['check']}}
-                exclude-regex: ${{matrix.path['exclude']}}
+        - name: Set check path dynamically
+          run: |
+            if [ "${{ matrix.path_type }}" == "lib" ]; then
+              echo "CHECK_PATH=lib/${{ env.lib_name }}" >> $GITHUB_ENV
+              echo "EXCLUDE_REGEX=" >> $GITHUB_ENV
+            else
+              echo "CHECK_PATH=test" >> $GITHUB_ENV
+              echo "EXCLUDE_REGEX=(hw_test|unity|template)" >> $GITHUB_ENV
+            fi
+
+        - name: Run clang-format style check for C/C++/Protobuf programs
+          uses: jidicula/clang-format-action@v4.13.0
+          with:
+            clang-format-version: '18'
+            check-path: ${{ env.CHECK_PATH }}
+            exclude-regex: ${{ env.EXCLUDE_REGEX }}
+
     
     run_unit_tests:
         name: Run Unit Tests
         runs-on: ubuntu-latest
-        needs: [build_unit_tets]
+        needs: [build_unit_tests]
         steps:
           - name: Download Unit Tests Build Artifacts
             uses: actions/download-artifact@v4
@@ -83,7 +89,7 @@ jobs:
     run_code_coverage_check:
         name: Run Code Coverage Check
         runs-on: ubuntu-latest
-        needs: [build_unit_tets]
+        needs: [build_unit_tests]
         steps:
             - name: checkout
               uses: actions/checkout@v4
@@ -110,7 +116,7 @@ jobs:
     run_cppcheck:
         name: Run CppCheck
         runs-on: ubuntu-latest
-        needs: [build_unit_tets]
+        needs: [build_unit_tests]
         steps:
             - name: checkout
               uses: actions/checkout@v4
@@ -141,7 +147,7 @@ jobs:
     run_code_complexity_check:
         name: Run Code Complexity Check
         runs-on: ubuntu-latest
-        needs: [build_unit_tets]
+        needs: [build_unit_tests]
         steps:
             - name: checkout
               uses: actions/checkout@v4
