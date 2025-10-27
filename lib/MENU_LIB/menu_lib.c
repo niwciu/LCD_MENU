@@ -37,7 +37,7 @@
 #define HEADER_ROW_OFFSET                1U      /**< Offset between header and menu view */
 
 /* --- Internal state --- */
-static bool menu_initialized = false; /**< Indicates if menu system has been initialized */
+PRIVATE bool menu_initialized = false; /**< Indicates if menu system has been initialized */
 
 PRIVATE uint8_t menu_number_of_chars_per_line;
 PRIVATE uint8_t menu_number_of_screen_lines;

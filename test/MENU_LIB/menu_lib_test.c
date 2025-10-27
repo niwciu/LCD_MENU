@@ -15,6 +15,7 @@ TEST_GROUP(menu_lib);
 TEST_SETUP(menu_lib)
 {
     /* Init before every test */
+    init_mock_screen_driver();
 }
 
 TEST_TEAR_DOWN(menu_lib)

@@ -18,6 +18,7 @@ uint8_t mock_cur_lcd_x;
 uint8_t mock_cur_lcd_y;
 
 mock_menu_screen_init_status_e mock_menu_screen_init_status = MENU_SCREEN_INIT_UNKNOWN;
+const struct menu_screen_driver_interface_struct *mock_driver_ptr = NULL;
 
 static void mock_screen_init(void);
 static uint8_t get_number_of_screen_lines(void);
@@ -30,6 +31,7 @@ static void mock_print_char(const char C);
 static void mock_copy_screen_char_table_2_scree_string_line_table(void);
 static void update_current_mock_lcd_cursor_position(void);
 
+const struct menu_screen_driver_interface_struct mock_menu_screen_incomplete_driver_interface = {0};
 const struct menu_screen_driver_interface_struct mock_menu_screen_driver_interface = {
     mock_screen_init,
     get_number_of_screen_lines,
@@ -42,7 +44,7 @@ const struct menu_screen_driver_interface_struct mock_menu_screen_driver_interfa
 
 const struct menu_screen_driver_interface_struct *get_menu_display_driver_interface(void)
 {
-    return &mock_menu_screen_driver_interface;
+    return mock_driver_ptr;
 }
 
 static void mock_screen_init(void)
@@ -125,4 +127,19 @@ static void update_current_mock_lcd_cursor_position(void)
         if (mock_cur_lcd_y > (LCD_Y - 1))
             mock_cur_lcd_y = 0;
     }
+}
+
+void init_mock_screen_driver(void)
+{
+    mock_driver_ptr = &mock_menu_screen_driver_interface;
+}
+
+void deinit_mock_screen_driver(void)
+{
+    mock_driver_ptr = NULL;
+}
+
+void init_mock_incomplete_screen_driver(void)
+{
+    mock_driver_ptr = &mock_menu_screen_incomplete_driver_interface;
 }

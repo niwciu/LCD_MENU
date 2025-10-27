@@ -3,11 +3,21 @@
 TEST_GROUP_RUNNER(menu_lib_init)
 {
     /* Test cases to run */
+    RUN_TEST_CASE(menu_lib_init, WhenMenuInitThenReturnOk);
 
-    // RUN_TEST_CASE(menu_lib_init, WhenMenuInitThenMenuEntryPointIsEqualToPassedConfigDataEntryPoint);
     RUN_TEST_CASE(menu_lib_init, WhenMenuInitThenMenuScreenSizeEqualToPassedConfigDataColumnCountAndRowCount);
     RUN_TEST_CASE(menu_lib_init, WhenMenuInitThenMenuScreenDriverInterfaceisEqualToMockMenuScreenDriverInterface);
+
+    RUN_TEST_CASE(menu_lib_init, WhenMenuViewInitWithoutInitThenReturnNotInitialized);
+    RUN_TEST_CASE(menu_lib_init, WhenMenuViewInitWithNullRootMenuThenReturnNoMenu);
+    RUN_TEST_CASE(menu_lib_init, WhenMenuViewInitWithTooDeepMenuThenReturnMenuDepthTooShallow);
+    RUN_TEST_CASE(menu_lib_init, WhenMenuViewInitWithValidMenuThenReturnOk);
+
+    RUN_TEST_CASE(menu_lib_init, WhenInitWithValidDisplayThenReturnOk);
+    RUN_TEST_CASE(menu_lib_init, WhenInitWithNullDisplayThenReturnNoDisplayInterface);
+    RUN_TEST_CASE(menu_lib_init, WhenInitWithIncompleteDisplayThenReturnIncompleteInterface);
 }
+
 
 TEST_GROUP_RUNNER(menu_lib)
 {

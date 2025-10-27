@@ -25,3 +25,7 @@ extern char mock_lcd_screen[LCD_Y][LCD_X];
 extern char *mock_screen_lines[LCD_Y];
 extern uint8_t mock_cur_lcd_x;
 extern uint8_t mock_cur_lcd_y;
+
+void init_mock_screen_driver(void);
+void deinit_mock_screen_driver(void);
+void init_mock_incomplete_screen_driver(void);

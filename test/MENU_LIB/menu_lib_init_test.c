@@ -4,107 +4,129 @@
 #include "menu_screen_driver_interface.h"
 #include "mock_menu_screen_driver_interface.h"
 #include <stddef.h>
+#include <stdbool.h>
 
 extern menu_t *menu_entry_point;
 extern uint8_t menu_number_of_chars_per_line;
 extern uint8_t menu_number_of_screen_lines;
-
+extern bool menu_initialized;
 extern const struct menu_screen_driver_interface_struct *DISPLAY;
+
+
+// DISPLAY mock
+extern const struct menu_screen_driver_interface_struct mock_menu_screen_driver_interface;
 
 TEST_GROUP(menu_lib_init);
 
-TEST_SETUP(menu_lib_init)
+TEST_SETUP(menu_lib_init) 
 {
-    /* Init before every test */
+    menu_initialized = false; 
+    init_mock_screen_driver();
 }
+TEST_TEAR_DOWN(menu_lib_init) 
+{ 
 
-TEST_TEAR_DOWN(menu_lib_init)
-{
-    /* Cleanup after every test */
 }
-
-// TEST(menu_lib_init, WhenMenuInitThenMenuEntryPointIsEqualToPassedConfigDataEntryPoint)
-// {
-//     menu_init_t menu_config;
-//     // When
-//     menu_config.menu_entry_point=&mock_menu_1;
-//     menu_init(NULL);
-//     // Then
-//     TEST_ASSERT_EQUAL(menu_config.menu_entry_point,menu_entry_point);
-// }
 
 TEST(menu_lib_init, WhenMenuInitThenMenuScreenSizeEqualToPassedConfigDataColumnCountAndRowCount)
 {
-    // When
-    uint8_t epected_screen_number_of_char_per_line = 20;
-    uint8_t epected_screen_number_of_lines = 4;
     menu_init();
-    // Then
-    TEST_ASSERT_EQUAL(epected_screen_number_of_char_per_line, menu_number_of_chars_per_line);
-    TEST_ASSERT_EQUAL(epected_screen_number_of_lines, menu_number_of_screen_lines);
+    TEST_ASSERT_EQUAL(20, menu_number_of_chars_per_line);
+    TEST_ASSERT_EQUAL(4, menu_number_of_screen_lines);
 }
 
 TEST(menu_lib_init, WhenMenuInitThenMenuScreenDriverInterfaceisEqualToMockMenuScreenDriverInterface)
 {
-
-    // When
     menu_init();
-    // Then
-    TEST_ASSERT_EQUAL(DISPLAY, get_menu_display_driver_interface());
+    TEST_ASSERT_EQUAL(DISPLAY, &mock_menu_screen_driver_interface);
 }
 
-// TEST(menu_lib_init, )
-// {
-//    // When
-//    // Then
-//     TEST_FAIL_MESSAGE("Implement your test!");
-// }
+TEST(menu_lib_init, WhenMenuViewInitWithoutInitThenReturnNotInitialized)
+{
+    menu_initialized = false;
+    menu_t dummy_menu = {0};
+    menu_status_t status = menu_view_init(&dummy_menu, NULL, NULL);
+    TEST_ASSERT_EQUAL(MENU_ERR_NOT_INITIALIZED, status);
+}
 
-// TEST(menu_lib_init, )
-// {
-//    // When
-//    // Then
-//     TEST_FAIL_MESSAGE("Implement your test!");
-// }
+TEST(menu_lib_init, WhenMenuViewInitWithNullRootMenuThenReturnNoMenu)
+{
+    menu_initialized = true;
+    menu_status_t status = menu_view_init(NULL, NULL, NULL);
+    TEST_ASSERT_EQUAL(MENU_ERR_NO_MENU, status);
+}
 
-// TEST(menu_lib_init, )
-// {
-//    // When
-//    // Then
-//     TEST_FAIL_MESSAGE("Implement your test!");
-// }
+TEST(menu_lib_init, WhenMenuViewInitWithTooDeepMenuThenReturnMenuDepthTooShallow)
+{
+    menu_initialized = true;
+    static menu_t deep_menu[MAX_MENU_DEPTH + 1];
+    for (int i = 0; i <= MAX_MENU_DEPTH; i++)
+        deep_menu[i].child = (i < MAX_MENU_DEPTH) ? &deep_menu[i + 1] : NULL;
 
-// TEST(menu_lib_init, )
-// {
-//    // When
-//    // Then
-//     TEST_FAIL_MESSAGE("Implement your test!");
-// }
+    menu_status_t status = menu_view_init(&deep_menu[0], NULL, NULL);
+    TEST_ASSERT_EQUAL(MENU_ERR_MENU_DEPTH_TOO_SHALLOW, status);
+}
 
-// TEST(menu_lib_init, )
-// {
-//    // When
-//    // Then
-//     TEST_FAIL_MESSAGE("Implement your test!");
-// }
+TEST(menu_lib_init, WhenMenuViewInitWithValidMenuThenReturnOk)
+{
+    menu_initialized = true;
+    menu_t valid_menu = {0};
+    valid_menu.name = "Root";
 
-// TEST(menu_lib_init, )
-// {
-//    // When
-//    // Then
-//     TEST_FAIL_MESSAGE("Implement your test!");
-// }
+    menu_status_t status = menu_view_init(&valid_menu, NULL, NULL);
+    TEST_ASSERT_EQUAL(MENU_OK, status);
+    TEST_ASSERT_EQUAL(&valid_menu, get_current_menu_position());
+}
 
-// TEST(menu_lib_init, )
-// {
-//    // When
-//    // Then
-//     TEST_FAIL_MESSAGE("Implement your test!");
-// }
+TEST(menu_lib_init, WhenMenuInitThenReturnOk)
+{
+    menu_status_t status = menu_init();
+    TEST_ASSERT_EQUAL(MENU_OK, status);
+    TEST_ASSERT_EQUAL(&mock_menu_screen_driver_interface, DISPLAY);
+    TEST_ASSERT_EQUAL(DISPLAY->get_number_of_chars_per_line(), menu_number_of_chars_per_line);
+    TEST_ASSERT_EQUAL(DISPLAY->get_number_of_screen_lines(), menu_number_of_screen_lines);
+}
 
-// TEST(menu_lib_init, )
-// {
-//    // When
-//    // Then
-//     TEST_FAIL_MESSAGE("Implement your test!");
-// }
+TEST(menu_lib_init, WhenInitWithValidDisplayThenReturnOk)
+{
+    menu_status_t status = menu_init();
+
+    TEST_ASSERT_EQUAL(MENU_OK, status);
+    TEST_ASSERT_EQUAL(&mock_menu_screen_driver_interface, DISPLAY);
+    TEST_ASSERT_EQUAL(DISPLAY->get_number_of_chars_per_line(), menu_number_of_chars_per_line);
+    TEST_ASSERT_EQUAL(DISPLAY->get_number_of_screen_lines(), menu_number_of_screen_lines);
+    TEST_ASSERT_TRUE(menu_initialized);
+}
+
+TEST(menu_lib_init, WhenInitWithNullDisplayThenReturnNoDisplayInterface)
+{
+    // given
+    deinit_mock_screen_driver();  // mock zwraca NULL
+
+    // when
+    menu_status_t status = menu_init();
+
+    // then
+    TEST_ASSERT_EQUAL(MENU_ERR_NO_DISPLAY_INTERFACE, status);
+    TEST_ASSERT_FALSE(menu_initialized);
+}
+
+
+TEST(menu_lib_init, WhenInitWithIncompleteDisplayThenReturnIncompleteInterface)
+{
+    // given
+    
+    init_mock_incomplete_screen_driver();
+
+    // when
+    menu_status_t status = menu_init();
+
+    // then
+    TEST_ASSERT_EQUAL(MENU_ERR_INCOMPLETE_INTERFACE, status);
+    TEST_ASSERT_FALSE(menu_initialized);
+
+    // przywrócenie poprawnego mocka
+    init_mock_screen_driver();
+}
+
+
