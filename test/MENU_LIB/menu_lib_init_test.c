@@ -3,7 +3,7 @@
 #include "mock_menu_implementation.h"
 #include "menu_screen_driver_interface.h"
 #include "mock_menu_screen_driver_interface.h"
-// #include "tested_module.h"
+#include <stddef.h>
 
 extern menu_t *menu_entry_point;
 extern uint8_t menu_number_of_chars_per_line;
@@ -28,7 +28,7 @@ TEST_TEAR_DOWN(menu_lib_init)
 //     menu_init_t menu_config;
 //     // When
 //     menu_config.menu_entry_point=&mock_menu_1;
-//     menu_init();
+//     menu_init(NULL);
 //     // Then
 //     TEST_ASSERT_EQUAL(menu_config.menu_entry_point,menu_entry_point);
 // }

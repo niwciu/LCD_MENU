@@ -11,8 +11,11 @@ TEST_GROUP_RUNNER(menu_lib_init)
 
 TEST_GROUP_RUNNER(menu_lib)
 {
-    /* MENU Init View Test cases to run */
+    /* MENU entry Init View Test cases to run */
     RUN_TEST_CASE(menu_lib, GivenMenuInitWith2004ScreenWhenMenuViewInitForMockMenuCalledThenScreenContentIsEqualToExpected);
+    /* MENU ESC on top level Test cases to run */
+    RUN_TEST_CASE(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndTopLevelEscCbRegisteredWhenMenuEscCalledThenTopLevelEscCbExecuted);
+    RUN_TEST_CASE(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndTopLevelEscCbNotRegisteredWhenMenuEscCalledThenTopLevelEscCbStatusIsEqualToUnknown);
     /* MENU NEXT on top level menu Test cases to run */
     RUN_TEST_CASE(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuWhenMenuNextCalledThenScreenContentIsEqualToExpected);
     RUN_TEST_CASE(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuWhenMenuNextCalledTwiceThenScreenContentIsEqualToExpected);
@@ -35,7 +38,7 @@ TEST_GROUP_RUNNER(menu_lib)
     RUN_TEST_CASE(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextCalled3TimesWhenMenuPrevCalledOnceThenScreenContentIsEqualToExpected);
     RUN_TEST_CASE(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextCalled3TimesWhenMenuPrevCalledTwiceThenScreenContentIsEqualToExpected);
 
-    /* MENU ENTER   Test cases to run */
+    /* MENU ENTER on top level Test cases to run */
     RUN_TEST_CASE(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuWhenMenuEnterCalledThenScreenContentIsEqualToExpected);
     RUN_TEST_CASE(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockAndMenuNextCalledMenuWhenMenuEnterCalledThenScreenContentIsEqualToExpected);
     RUN_TEST_CASE(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockAndMenuNext50TimesCalledMenuWhenMenuEnterCalledThenScreenContentIsEqualToExpected);
@@ -70,5 +73,8 @@ TEST_GROUP_RUNNER(menu_lib)
     /* MENU callback execution Test cases to run */
     RUN_TEST_CASE(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextCalled5TimesAndMenuPrevCalled3TimesAndMenuEnterCalledTwiceAndMenuNextCalled3TimesAndMenuPrevCalledOnceAndMockMenuCalblackStatusSetToUnknownWhenMenuEnterCalleddTwiceThenMockMenuCalblackStatusIsEqualToCbExecuted);
     RUN_TEST_CASE(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextCalled5TimesAndMockMenuCalblackStatusSetToUnknownWhenMenuEnterCalleddOnceThenMockMenuCalblackStatusIsEqualToUnknown);
+
+    /* MENU get current posisiotn test cases to run */
+    RUN_TEST_CASE(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextCalled2TimesWhenGetCurrentMenuPositionCalledThenReturnetValueIsEqualToMockMenu3);
     // important to check if enter scrren are same as exit screen (menu view and cursor position)
 }

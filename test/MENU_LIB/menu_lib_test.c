@@ -2,6 +2,7 @@
 #include "menu_lib.h"
 #include "mock_menu_implementation.h"
 #include "mock_menu_screen_driver_interface.h"
+#include <stddef.h>
 
 // #include "tested_module.h"
 
@@ -21,7 +22,7 @@ TEST_TEAR_DOWN(menu_lib)
     /* Cleanup after every test */
 }
 
-/* MENU ENTER Test cases to run */
+/* MENU entry Init View Test cases to run */
 TEST(menu_lib, GivenMenuInitWith2004ScreenWhenMenuViewInitForMockMenuCalledThenScreenContentIsEqualToExpected)
 {
     const char *expected_screen[4] = {
@@ -32,9 +33,46 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenWhenMenuViewInitForMockMenuCalledThenS
     // Given
     menu_init();
     // When
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, mock_menu_top_level_exit_callback, NULL);
     // Then
     TEST_ASSERT_EQUAL_STRING_ARRAY(expected_screen, mock_screen_lines, LCD_Y);
+}
+
+/* MENU ESC on top level Test cases to run */
+TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndTopLevelEscCbRegisteredWhenMenuEscCalledThenTopLevelEscCbExecuted)
+{
+    const char *expected_screen[4] = {
+        "------- MENU -------",
+        ">menu_1             ",
+        " menu_2             ",
+        " menu_3             "};
+    // Given
+    menu_init();
+    menu_view_init(&mock_menu_1, mock_menu_top_level_exit_callback, NULL);
+    TEST_ASSERT_EQUAL_STRING_ARRAY(expected_screen, mock_screen_lines, LCD_Y);
+    set_top_level_exit_cb_status_to_unknown();
+    // When
+    menu_esc();
+    // Then
+    TEST_ASSERT_EQUAL(CB_EXECUTED, mock_menu_top_level_exit_cb_status);
+}
+
+TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndTopLevelEscCbNotRegisteredWhenMenuEscCalledThenTopLevelEscCbStatusIsEqualToUnknown)
+{
+    const char *expected_screen[4] = {
+        "------- MENU -------",
+        ">menu_1             ",
+        " menu_2             ",
+        " menu_3             "};
+    // Given
+    menu_init();
+    menu_view_init(&mock_menu_1, NULL, NULL);
+    TEST_ASSERT_EQUAL_STRING_ARRAY(expected_screen, mock_screen_lines, LCD_Y);
+    set_top_level_exit_cb_status_to_unknown();
+    // When
+    menu_esc();
+    // Then
+    TEST_ASSERT_EQUAL(CB_STATUS_UNKNOWN, mock_menu_top_level_exit_cb_status);
 }
 
 /* MENU NEXT on top level menu Test cases to run */
@@ -47,10 +85,10 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuWhenMenuNext
         " menu_3             "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, mock_menu_top_level_exit_callback, NULL);
     // When
     menu_next();
-    // Then
+    // Then`
     TEST_ASSERT_EQUAL_STRING_ARRAY(expected_screen, mock_screen_lines, LCD_Y);
 }
 
@@ -64,7 +102,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuWhenMenuNext
         ">menu_3             "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, mock_menu_top_level_exit_callback, NULL);
     // When
     call_menu_fun_x_times(menu_next, fun_call_repetition);
     // Then
@@ -81,7 +119,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuWhenMenuNext
         ">menu_4             "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     // When
     call_menu_fun_x_times(menu_next, fun_call_repetition);
     // Then
@@ -98,7 +136,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuWhenMenuNext
         ">menu_5             "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     // When
     call_menu_fun_x_times(menu_next, fun_call_repetition);
     // Then
@@ -115,7 +153,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuWhenMenuNext
         ">menu_5             "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     // When
     call_menu_fun_x_times(menu_next, fun_call_repetition);
     // Then
@@ -133,7 +171,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextC
         " menu_5             "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     call_menu_fun_x_times(menu_next, fun_call_repetition);
     // When
     menu_prev();
@@ -152,7 +190,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextC
         " menu_5             "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     call_menu_fun_x_times(menu_next, menu_next_call_repetition);
     // When
     call_menu_fun_x_times(menu_prev, menu_prev_call_repetition);
@@ -171,7 +209,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextC
         " menu_4             "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     call_menu_fun_x_times(menu_next, menu_next_call_repetition);
     // When
     call_menu_fun_x_times(menu_prev, menu_prev_call_repetition);
@@ -190,7 +228,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextC
         " menu_3             "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     call_menu_fun_x_times(menu_next, menu_next_call_repetition);
     // When
     call_menu_fun_x_times(menu_prev, menu_prev_call_repetition);
@@ -209,7 +247,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextC
         " menu_3             "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     call_menu_fun_x_times(menu_next, menu_next_call_repetition);
     // When
     call_menu_fun_x_times(menu_prev, menu_prev_call_repetition);
@@ -228,7 +266,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextC
         " menu_3             "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     call_menu_fun_x_times(menu_next, menu_next_call_repetition);
     // When
     call_menu_fun_x_times(menu_prev, menu_prev_call_repetition);
@@ -248,7 +286,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextC
         " menu_3             "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     call_menu_fun_x_times(menu_next, menu_next_call_repetition);
     // When
     call_menu_fun_x_times(menu_prev, menu_prev_call_repetition);
@@ -267,7 +305,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextC
         " menu_3             "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     call_menu_fun_x_times(menu_next, menu_next_call_repetition);
     // When
     call_menu_fun_x_times(menu_prev, menu_prev_call_repetition);
@@ -286,7 +324,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextC
         " menu_3             "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     call_menu_fun_x_times(menu_next, menu_next_call_repetition);
     // When
     call_menu_fun_x_times(menu_prev, menu_prev_call_repetition);
@@ -305,7 +343,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextC
         " menu_3             "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     call_menu_fun_x_times(menu_next, menu_next_call_repetition);
     // When
     call_menu_fun_x_times(menu_prev, menu_prev_call_repetition);
@@ -324,7 +362,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextC
         " menu_4             "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     call_menu_fun_x_times(menu_next, menu_next_call_repetition);
     // When
     call_menu_fun_x_times(menu_prev, menu_prev_call_repetition);
@@ -343,7 +381,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextC
         " menu_4             "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     call_menu_fun_x_times(menu_next, menu_next_call_repetition);
     // When
     call_menu_fun_x_times(menu_prev, menu_prev_call_repetition);
@@ -361,7 +399,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuWhenMenuEnte
         " menu_1_3           "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     // When
     menu_enter();
     // Then
@@ -377,7 +415,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockAndMenuNextCalle
         " menu_2_3           "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     menu_next();
     // When
     menu_enter();
@@ -395,7 +433,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockAndMenuNext50Tim
         ">menu_5             "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     call_menu_fun_x_times(menu_next, menu_next_repetitions);
     // When
     menu_enter();
@@ -413,7 +451,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextC
         " menu_2_3           "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     menu_next();
     menu_enter();
     // When
@@ -432,7 +470,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextC
         ">menu_2_4           "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     menu_next();
     menu_enter();
     // When
@@ -451,7 +489,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextC
         " menu_2_4           "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     menu_next();
     menu_enter();
     call_menu_fun_x_times(menu_next, menu_next_repetition_counter);
@@ -473,7 +511,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextC
         " menu_2_3           "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     menu_next();
     menu_enter();
     call_menu_fun_x_times(menu_next, menu_next_repetition_counter);
@@ -493,7 +531,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextC
         " menu_2_1_3         "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     menu_next();
     menu_enter();
     menu_enter();
@@ -513,7 +551,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextC
         ">menu_2_1_4         "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     menu_next();
     menu_enter();
     menu_enter();
@@ -533,7 +571,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextC
         " menu_2_1_4         "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     menu_next();
     menu_enter();
     menu_enter();
@@ -556,7 +594,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextC
         " menu_2_1_3         "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     menu_next();
     menu_enter();
     menu_enter();
@@ -578,7 +616,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextC
         " menu_2_1_1_3       "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     menu_next();
     call_menu_fun_x_times(menu_enter, menu_enter_repetition_counter);
     // When
@@ -598,7 +636,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextC
         ">menu_2_1_1_4       "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     menu_next();
     call_menu_fun_x_times(menu_enter, menu_enter_repetition_counter);
     // When
@@ -618,7 +656,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextC
         " menu_2_1_1_4       "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     menu_next();
     call_menu_fun_x_times(menu_enter, menu_enter_repetition_counter);
     call_menu_fun_x_times(menu_next, menu_next_repetition_counter);
@@ -641,7 +679,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextC
         " menu_2_1_1_3       "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     menu_next();
     call_menu_fun_x_times(menu_enter, menu_enter_repetition_counter);
     call_menu_fun_x_times(menu_next, menu_next_repetition_counter);
@@ -661,7 +699,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextC
         " menu_3             "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     menu_next();
     menu_enter();
     menu_next();
@@ -681,7 +719,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextC
         " menu_3             "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     menu_next();
     menu_enter();
     menu_next();
@@ -703,7 +741,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextC
         " menu_2_1_3_3       "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     call_menu_fun_x_times(menu_next, menu_next_repetition_counter);
     call_menu_fun_x_times(menu_prev, menu_prev_repetition_counter);
     call_menu_fun_x_times(menu_enter, menu_enter_repetition_counter);
@@ -729,7 +767,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextC
         " menu_2_1_4         "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     call_menu_fun_x_times(menu_next, menu_next_repetition_counter);
     call_menu_fun_x_times(menu_prev, menu_prev_repetition_counter);
     call_menu_fun_x_times(menu_enter, menu_enter_repetition_counter);
@@ -757,7 +795,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextC
         " menu_2_3           "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     call_menu_fun_x_times(menu_next, menu_next_repetition_counter);
     call_menu_fun_x_times(menu_prev, menu_prev_repetition_counter);
     call_menu_fun_x_times(menu_enter, menu_enter_repetition_counter);
@@ -785,7 +823,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextC
         " menu_4             "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     call_menu_fun_x_times(menu_next, menu_next_repetition_counter);
     call_menu_fun_x_times(menu_prev, menu_prev_repetition_counter);
     call_menu_fun_x_times(menu_enter, menu_enter_repetition_counter);
@@ -813,7 +851,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextC
         " menu_4             "};
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     call_menu_fun_x_times(menu_next, menu_next_repetition_counter);
     call_menu_fun_x_times(menu_prev, menu_prev_repetition_counter);
     call_menu_fun_x_times(menu_enter, menu_enter_repetition_counter);
@@ -835,7 +873,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextC
     uint8_t menu_enter_repetition_counter = 2;
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     call_menu_fun_x_times(menu_next, menu_next_repetition_counter);
     call_menu_fun_x_times(menu_prev, menu_prev_repetition_counter);
     call_menu_fun_x_times(menu_enter, menu_enter_repetition_counter);
@@ -855,7 +893,7 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextC
     uint8_t menu_next_repetition_counter = 5;
     // Given
     menu_init();
-    menu_view_init(&mock_menu_1);
+    menu_view_init(&mock_menu_1, NULL, NULL);
     call_menu_fun_x_times(menu_next, menu_next_repetition_counter);
     mock_set_callback_status_to_unknown();
     // When
@@ -863,13 +901,18 @@ TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextC
     // Then
     TEST_ASSERT_EQUAL(CB_STATUS_UNKNOWN, mock_menu_callback_status);
 }
-// TEST(menu_lib, )
-// {
-//     // Given
-//     // When
-//     // Then
-//     TEST_FAIL_MESSAGE("Implement your test!");
-// }
+TEST(menu_lib, GivenMenuInitWith2004ScreenAndMenuViewInitForMockMenuAndMenuNextCalled2TimesWhenGetCurrentMenuPositionCalledThenReturnetValueIsEqualToMockMenu3)
+{
+    uint8_t menu_next_repetition_counter = 2;
+    // Given
+    menu_init();
+    menu_view_init(&mock_menu_1, NULL, NULL);
+    call_menu_fun_x_times(menu_next, menu_next_repetition_counter);
+    // When
+    menu_t *readed_menu_pos = get_current_menu_position();
+    // Then
+    TEST_ASSERT_EQUAL(&mock_menu_3, readed_menu_pos);
+}
 
 // TEST(menu_lib, )
 // {

@@ -11,6 +11,7 @@ typedef enum
 } mock_cb_status_e;
 
 extern mock_cb_status_e mock_menu_callback_status;
+extern mock_cb_status_e mock_menu_top_level_exit_cb_status;
 
 extern menu_t mock_menu_1;
 extern menu_t mock_sub_menu_1_1;
@@ -47,3 +48,5 @@ extern menu_t mock_sub_menu_4_4;
 extern menu_t mock_menu_5;
 
 void mock_set_callback_status_to_unknown(void);
+void set_top_level_exit_cb_status_to_unknown(void);
+void mock_menu_top_level_exit_callback(void);

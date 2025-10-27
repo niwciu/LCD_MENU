@@ -1,8 +1,13 @@
 out/
 Release/
 Debug/
-Build/
-tools/
+build/
+lib_repos/
+venv/
+.venv/
 
+ToDo.txt
 reports/
 
+__pycache__
+tools/

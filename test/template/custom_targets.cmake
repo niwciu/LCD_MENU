@@ -15,27 +15,35 @@ add_custom_target(run template_test)
 # check if lizard software is available 
 find_program(lizard_program lizard)
 if(lizard_program)
-	message(STATUS "Lizard was found, you can use predefined targets for src folder Code Complexity Metrics: \r\n\tccm,\r\n\tccmr,")
+	message(STATUS "Lizard was found, you can use predefined targets for lib folder Code Complexity Metrics: \r\n\tccm,\r\n\tccmr,")
 else()
-	message(STATUS "Lizard was not found. \r\n\tInstall Lizard to get predefined targets for src folder Code Complexity Metrics")
+	message(STATUS "Lizard was not found. \r\n\tInstall Lizard to get predefined targets for lib folder Code Complexity Metrics")
 endif()
-# Prints CCM for src folder in the console
+# Prints CCM for lib folder in the console
 add_custom_target(ccm lizard 
-						../../../src/ 
+						../../../lib/template 
 						--CCN 12 -Tnloc=30 
 						-a 4 
 						--languages cpp 
 						-V 
 						-i 1)
 # Create CCM report in reports/Cylcomatic_Complexity/
-add_custom_target(ccmr lizard 
-						../../../src/ 
-						--CCN 12 
-						-Tnloc=30 
-						-a 4 
-						--languages cpp 
-						-V 
-						-o ../../../reports/CCM/template.html)
+add_custom_command(
+    OUTPUT ../../../reports/CCM/
+    COMMAND ${CMAKE_COMMAND} -E make_directory ../../../reports/CCM/
+    COMMENT "Tworzenie katalogów raportów Code Coverage"
+)
+add_custom_target(ccmr 
+	COMMAND ${CMAKE_COMMAND} -E make_directory ../../../reports/CCM/
+	COMMAND lizard 
+				../../../lib/template 
+				--CCN 12 
+				-Tnloc=30 
+				-a 4 
+				--languages cpp 
+				-V 
+				-o ../../../reports/CCM/template.html
+)
 
 # TARGET FOR MAKING STATIC ANALYSIS OF THE SOURCE CODE AND UNIT TEST CODE
 # check if cppchec software is available 
@@ -46,7 +54,7 @@ else()
 	message(STATUS "CppCheck was not found. \r\n\tInstall CppCheck to get predefined targets for static analize")
 endif()
 add_custom_target(cppcheck cppcheck
-					../../../src/template
+					../../../lib/template
 					../../../test/template
 					-i../../../test/template/out
 					--enable=all
@@ -63,41 +71,55 @@ add_custom_target(cppcheck cppcheck
 # TARGET FOR CREATING CODE COVERAGE REPORTS
 # check if python 3 and gcovr are available 
 find_program(GCOVR gcovr)
-find_program(PYTHON python)
-if(PYTHON)
-	if(GCOVR)
-		message(STATUS "python 3 and gcovr was found, you can use predefined targets for uint tests code coverage report generation : \r\n\tccc, \r\n\tccr")
-	else()
-		message(STATUS "pyton 3 was found but gcovr was not found. \r\n\tInstall gcovr to get predefined targets for uint tests code coverage report generation")
-	endif()
+if(GCOVR)
+	message(STATUS "python 3 and gcovr was found, you can use predefined targets for uint tests code coverage report generation : 
+					\r\tccc - Code Coverage Check, 
+					\r\tccr - Code Coverage Reports generation,
+					\r\tccca - Code Coverage Check All -> whole project check, 
+					\r\tccra - Code Coverage Reports All -> whole project raport generation")
 else()
-	if(GCOVR)
-		message(STATUS "python3 was not found. \r\n\tInstall python 3 to get predefined targets for uint tests code coverage report generation")
-	else()
-		message(STATUS "python3 and gcovr were not found. \r\n\tInstall python 3 and gcovr to get predefined targets for uint tests code coverage report generation")
-	endif()
+	message(STATUS "pyton 3 was found but gcovr was not found. \r\n\tInstall gcovr to get predefined targets for uint tests code coverage report generation")
 endif()
-add_custom_target(ccr python -m gcovr 
-						-r ../../../lib/template 
-						--json ../../../reports/CCR/JSON_ALL/coverage_template.json
-						--json-base  src/template
-						--html-details ../../../reports/CCR/template/template_report.html 
-						.)
-add_custom_target(ccc python -m gcovr  
-						-r ../../../lib/template 
+add_custom_command(
+    OUTPUT ../../../reports/CCR/ ../../../reports/CCR/JSON_ALL/
+    COMMAND ${CMAKE_COMMAND} -E make_directory ../../../reports/CCR/
+    COMMAND ${CMAKE_COMMAND} -E make_directory ../../../reports/CCR/JSON_ALL/
+    COMMENT "Tworzenie katalogów raportów Code Coverage"
+)
+add_custom_target(ccr
+	COMMAND ${CMAKE_COMMAND} -E make_directory ../../../reports/CCR/
+	COMMAND ${CMAKE_COMMAND} -E make_directory ../../../reports/CCR/JSON_ALL/
+	COMMAND gcovr 
+				-r ../../../lib/template_lib 
+				--json ../../../reports/CCR/JSON_ALL/coverage_template.json
+				--json-base  lib/template_lib
+				--html-details ../../../reports/CCR/template_report.html
+				--html-theme github.dark-green
+				.
+)
+		
+add_custom_target(ccc gcovr  
+						-r ../../../lib/template_lib 
 						--fail-under-line 90
-						.)
+						.
+)
 
-add_custom_target(ccca python -m gcovr  
+add_custom_target(ccca gcovr  
 						-r ../../../ 
-						--json-add-tracefile ../../../reports/CCR/JSON_ALL/coverage_*.json  
-						.)
+						--json-add-tracefile \"../../../reports/CCR/JSON_ALL/coverage_*.json\"  
+						.
+)
 						
-add_custom_target(ccar python -m gcovr  
-						-r ../../../ 
-						--json-add-tracefile ../../../reports/CCR/JSON_ALL/coverage_*.json  
-						--html-details -o ../../../reports/CCR/HTML_OUT/project_coverage.html
-						.)
+add_custom_target(ccra  
+	COMMAND ${CMAKE_COMMAND} -E make_directory ../../../reports/CCR/
+	COMMAND ${CMAKE_COMMAND} -E make_directory ../../../reports/CCR/JSON_ALL/
+	COMMAND gcovr 
+				-r ../../../ 
+				--json-add-tracefile \"../../../reports/CCR/JSON_ALL/coverage_*.json\"  
+				--html-details -o ../../../reports/CCR/JSON_ALL/HTML_OUT/project_coverage.html
+				--html-theme github.dark-green
+				.
+)
 add_dependencies(ccra ccr)
 add_dependencies(ccca ccr)
 
@@ -107,9 +129,15 @@ if(CLANG_FORMAT)
 else()
 	message(STATUS "clang-format was not found. \r\n\tInstall clang-format to get predefined target for formating the code in project predefined standard")
 endif()
-add_custom_target(format  clang-format -i -style=file 
-				../../../src/template/*.c 
-				../../../src/template/*.h)
-add_custom_target(format_test  clang-format -i -style=file 
-				../*.c 
-				../*.h)
+add_custom_target(format  clang-format 
+							-i 
+							-style=file 
+							../../../lib/template_lib/*.c 
+							../../../lib/template_lib/*.h
+)
+add_custom_target(format_test  clang-format 
+								-i 
+								-style=file 
+								../*.c 
+								../*.h
+)

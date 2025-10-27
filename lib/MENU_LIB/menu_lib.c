@@ -12,7 +12,7 @@
 #include "menu_screen_driver_interface.h"
 #include <string.h>
 
-#ifndef UNIT_TEST
+#ifndef UNIT_TESTS
 #define PRIVATE static
 #else
 #define PRIVATE
@@ -31,16 +31,15 @@ static uint8_t cursor_selection_menu_index[MAX_MENU_DEPTH];
 static uint8_t cursor_row_position[MAX_MENU_DEPTH]; // depand
 static uint8_t menu_level;
 
-// uint8_t lcd_row_pos;
-// uint8_t lcd_row_pos_level_1;
-// uint8_t lcd_row_pos_level_2;
-// uint8_t lcd_row_pos_level_3;
-// uint8_t lcd_row_pos_level_4;
-
 PRIVATE const struct menu_screen_driver_interface_struct *DISPLAY = NULL;
+static menu_exit_cb_t menu_top_level_exit_cb = NULL;
 
-static void update_screen_view(void);
+static const char *default_header = {" MENU "};
+static const char *custom_header = NULL;
+
 static void display_menu_header(void);
+static void display_main_menu_header(void);
+static void display_sub_menu_header(void);
 static void fill_header_with_dashes(void);
 static void clear_current_menu_view_with_cursor(void);
 static void update_menu_item_2_ptrint(void);
@@ -54,13 +53,15 @@ void menu_init(void)
     // add function for defining max submenu_level nad error handling if menu_depth is to low?
 }
 
-void menu_view_init(menu_t *menu_entry_point) // zmian nazwy na enable menu view
+void menu_view_init(menu_t *menu_entry_point, menu_exit_cb_t menu_exit_cb, const char *meun_header) // zmian nazwy na enable menu view
 {
     current_menu_pointer = menu_entry_point;
     menu_1st_item = menu_entry_point;
     menu_level = 0;
     cursor_selection_menu_index[menu_level] = 0;
     cursor_row_position[menu_level] = 0;
+    menu_top_level_exit_cb = menu_exit_cb;
+    custom_header = meun_header;
     update_screen_view();
 }
 
@@ -125,9 +126,16 @@ void menu_esc(void)
         current_menu_pointer = current_menu_pointer->parent;
         update_screen_view();
     }
+    else
+    {
+        if (menu_top_level_exit_cb != NULL)
+        {
+            menu_top_level_exit_cb();
+        }
+    }
 }
 
-static void update_screen_view(void)
+void update_screen_view(void)
 {
     display_menu_header();
     clear_current_menu_view_with_cursor();
@@ -135,30 +143,54 @@ static void update_screen_view(void)
     update_current_menu_view_with_cursor();
 }
 
+menu_t *get_current_menu_position(void)
+{
+    return current_menu_pointer;
+}
+
 static void display_menu_header(void)
 {
-    // DISPLAY->clr_scr();
     fill_header_with_dashes();
 
     if (current_menu_pointer->parent == NULL)
     {
-        DISPLAY->cursor_position(0, 7);
-        DISPLAY->print_string(" MENU "); // ToDo need to be unified for different screen sizes
-        menu_item_2_print = menu_1st_item;
+        display_main_menu_header();
     }
     else
     {
-        // display sub_menu header
-        uint8_t header_str_len = strlen(current_menu_pointer->parent->name);
-        header_str_len = header_str_len + ADDITIONAL_SPACE_CHAR_QTY;
-        uint8_t header_start_position = (menu_number_of_chars_per_line - header_str_len) / 2;
-        DISPLAY->cursor_position(0, header_start_position);
-        DISPLAY->print_char(' ');
-        DISPLAY->print_string(current_menu_pointer->parent->name);
-        DISPLAY->print_char(' ');
-        // set first item for current sub menu
-        menu_item_2_print = current_menu_pointer->parent->child;
+        display_sub_menu_header();
     }
+}
+static void display_main_menu_header(void)
+{
+    uint8_t column;
+    const char *header_2_display;
+    if (custom_header == NULL)
+    {
+        column = 7;
+        header_2_display = default_header;
+    }
+    else
+    {
+        column = (menu_number_of_chars_per_line - strlen(custom_header)) / 2;
+        header_2_display = custom_header;
+        // custom_header = NULL;
+    }
+    DISPLAY->cursor_position(0, column);
+    DISPLAY->print_string(header_2_display);
+    menu_item_2_print = menu_1st_item;
+}
+static void display_sub_menu_header(void)
+{
+    uint8_t header_str_len = strlen(current_menu_pointer->parent->name);
+    header_str_len = header_str_len + ADDITIONAL_SPACE_CHAR_QTY;
+    uint8_t header_start_position = (menu_number_of_chars_per_line - header_str_len) / 2;
+    DISPLAY->cursor_position(0, header_start_position);
+    DISPLAY->print_char(' ');
+    DISPLAY->print_string(current_menu_pointer->parent->name);
+    DISPLAY->print_char(' ');
+    // set first item for current sub menu
+    menu_item_2_print = current_menu_pointer->parent->child;
 }
 
 static void fill_header_with_dashes(void)

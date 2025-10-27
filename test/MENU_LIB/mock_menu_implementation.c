@@ -3,6 +3,7 @@
 #include <stddef.h>
 
 mock_cb_status_e mock_menu_callback_status = CB_STATUS_UNKNOWN;
+mock_cb_status_e mock_menu_top_level_exit_cb_status = CB_STATUS_UNKNOWN;
 
 static void mock_menu_1_1_callback(void);
 static void mock_menu_1_2_callback(void);
@@ -182,4 +183,14 @@ static void set_callback_status_to_called(void)
 void mock_set_callback_status_to_unknown(void)
 {
     mock_menu_callback_status = CB_STATUS_UNKNOWN;
+}
+
+void mock_menu_top_level_exit_callback(void)
+{
+    mock_menu_top_level_exit_cb_status = CB_EXECUTED;
+}
+
+void set_top_level_exit_cb_status_to_unknown(void)
+{
+    mock_menu_top_level_exit_cb_status = CB_STATUS_UNKNOWN;
 }

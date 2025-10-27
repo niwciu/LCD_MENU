@@ -6,11 +6,11 @@
 #        For build using Unix Makefiles:
 #          	1. cmake -S./ -B out -G"Unix Makefiles"
 #			2. enter the "out" folder
-#          	3. make all -o menu_lib.o (-jXX additionaly to speed up)
+#          	3. make all -o template_test.o (-jXX additionaly to speed up)
 #        For build using Ninja:
 #          	1. cmake -S./ -B out -G"Ninja"
 # 			2. enter the "out" folder
-#         	3. ninja -C out -o menu_lib.o (optional with -V  and -jxx ->xx numnber of cores)
+#         	3. ninja -C out -o template_test.o (optional with -V  and -jxx ->xx numnber of cores)
 # additional custom targets for this project:
 # 		If lizard is installed and you are in the out folder:
 # 			1. make ccm -> code complexity metrix print in console
@@ -22,58 +22,62 @@
 # 			1. make ccr -> code coverage report generation 
 # 
 #############################################################################################################################
-cmake_minimum_required(VERSION 3.10)
-
+cmake_minimum_required(VERSION 3.20)
 project(MENU_LIB_test C)
 
-add_subdirectory(../unity unity)
+# --- Add subdirectories for libraries ---
+add_subdirectory(../unity unity_build)          # unity static library
+add_subdirectory(../../lib/MENU_LIB menu_lib_build)  # MENU_LIB static library
 
+# --- Include custom targets ---
 set(CUSTOM_TARGETS_FILE_DIR ./custom_targets.cmake)
+include(${CUSTOM_TARGETS_FILE_DIR})
 
-set(CMAKE_C_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Wextra")
-if ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fdiagnostics-color=always")
-elseif ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fcolor-diagnostics")
-endif()
-
-set(INCLUDE_DIRS
-	../../src/
-)
-
-set(TEST_INCLUDE_DIRS
-	..
-	.
-)
-
-set(SRCS
-	../../src/menu_lib.c
-)
-
+# --- Test source files ---
 set(TEST_SRCS
     menu_lib_test_main.c
     menu_lib_test_runner.c
     menu_lib_test.c
 	menu_lib_init_test.c
-
+	#mock_module.c
 	mock_menu_implementation.c
 	mock_menu_screen_driver_interface.c
-	#mock_module.c
+
 )
 
+# --- Global defines (dla kompilatora) ---
 set(GLOBAL_DEFINES
-	-DUNIT_TEST
+    -DUNIT_TESTS
 )
-# set -g3 flag for enabling debug on developing maching
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g3")
 
-include(${CUSTOM_TARGETS_FILE_DIR})
+# --- Create test executable ---
+add_executable(${PROJECT_NAME} ${TEST_SRCS})
 
-include_directories(${INCLUDE_DIRS} ${TEST_INCLUDE_DIRS})
-add_definitions(${GLOBAL_DEFINES})
+# --- Link precompiled libraries ---
+target_link_libraries(${PROJECT_NAME} PRIVATE menu_lib unity)
 
-link_libraries(unity)
-add_executable(${PROJECT_NAME} ${SRCS} ${TEST_SRCS})
+# --- Include directories ---
+target_include_directories(${PROJECT_NAME} PRIVATE ..)
 
-target_compile_options(${PROJECT_NAME} PRIVATE -fprofile-arcs -ftest-coverage)
-target_link_options(${PROJECT_NAME} PRIVATE -fprofile-arcs)
+# --- Apply global defines ---
+target_compile_definitions(${PROJECT_NAME} PRIVATE ${GLOBAL_DEFINES})
+target_compile_definitions(menu_lib PRIVATE ${GLOBAL_DEFINES})
+# --- Compiler flags ---
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -g3 -fshort-enums")
+if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fdiagnostics-color=always")
+elseif("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fcolor-diagnostics")
+endif()
+
+# --- Link math library if available ---
+find_library(HAVE_LIB_M m)
+if(HAVE_LIB_M)
+    target_link_libraries(${PROJECT_NAME} PRIVATE m)
+endif()
+
+# --- Conditional coverage flags ---
+    target_compile_options(${PROJECT_NAME} PRIVATE -fprofile-arcs -ftest-coverage)
+    target_link_options(${PROJECT_NAME} PRIVATE -fprofile-arcs)
+    target_compile_options(menu_lib PRIVATE -fprofile-arcs -ftest-coverage)
+    target_link_options(menu_lib PRIVATE -fprofile-arcs)
